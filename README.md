@@ -30,7 +30,7 @@ VAL-001 Memory Attention algebra
     FROZEN REFERENCE — PASS
 
 VAL-002 value-source decomposition
-    NEXT
+    DESIGN FROZEN — EXECUTOR NOT YET IMPLEMENTED
 
 BENCH-001 residency baseline
     NOT STARTED
