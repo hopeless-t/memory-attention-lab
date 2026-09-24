@@ -132,3 +132,34 @@ def test_unknown_nested_field_is_rejected(tmp_path: Path):
 
     with pytest.raises(SpecError, match="extra"):
         load_spec(bad)
+
+
+def test_ragged_memory_table_is_invalid_spec(tmp_path: Path):
+    raw = json.loads(SPEC_PATH.read_text())
+    raw["fixture"]["memory_table"][0] = [1.0, 2.0]
+    bad = tmp_path / "bad-ragged.json"
+    bad.write_text(json.dumps(raw))
+
+    with pytest.raises(SpecError, match="memory_table"):
+        load_spec(bad)
+
+
+def test_out_of_range_token_id_is_invalid_spec(tmp_path: Path):
+    raw = json.loads(SPEC_PATH.read_text())
+    raw["fixture"]["token_ids"][1] = 999
+    bad = tmp_path / "bad-token.json"
+    bad.write_text(json.dumps(raw))
+
+    with pytest.raises(SpecError, match="out-of-range"):
+        load_spec(bad)
+
+
+def test_wrong_expected_value_produces_scientific_fail():
+    spec, digest = _loaded()
+    broken = json.loads(json.dumps(spec))
+    broken["expected"]["constructed_values"][0][0][0] += 0.25
+
+    result = run_val001(broken, digest)
+
+    assert result["manifest"]["status"] == "FAIL"
+    assert not result["checks"]["known_answer_constructed_values"]["passed"]
