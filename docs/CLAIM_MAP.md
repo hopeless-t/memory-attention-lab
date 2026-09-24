@@ -82,8 +82,21 @@ VAL-001
 **Current status**
 
 ~~~text
-NOT_TESTED
+CONSISTENT
 ~~~
+
+**Evidence**
+
+VAL-001 canonical reference evidence demonstrates the frozen independent algebra,
+including the pre-RoPE content-key boundary and known-answer value construction:
+
+~~~text
+evidence/VAL-001/reference/
+source commit f941844c985a0857dc93b6cc321fa40427856f08
+~~~
+
+This assessment is limited to the frozen numerical contract. It is not a
+quality, performance, or upstream-runtime-equivalence claim.
 
 ---
 
@@ -121,8 +134,20 @@ VAL-001
 **Current status**
 
 ~~~text
-NOT_TESTED
+CONSISTENT
 ~~~
+
+**Evidence**
+
+VAL-001 shows exact agreement between online RMS-normalization and the frozen
+pre-folded memory-table path for the reference fixture:
+
+~~~text
+folded_equivalence_max_abs_error = 0.0
+~~~
+
+This does not test quantized, lower-precision, or deployment-specific folded
+tables.
 
 ---
 

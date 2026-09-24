@@ -1,0 +1,8 @@
+{
+  "constructed_values_max_abs_error": 0.0,
+  "folded_equivalence_max_abs_error": 0.0,
+  "normalized_memory_max_abs_error": 0.0,
+  "post_rope_guard_delta": 1.1667631545428359,
+  "rope_roundtrip_max_abs_error": 2.220446049250313e-16,
+  "rotated_keys_max_abs_error": 0.0
+}
