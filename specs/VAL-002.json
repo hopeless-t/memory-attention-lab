@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "experiment_id": "VAL-002",
+  "status": "design_frozen",
+  "purpose": "Separate token-memory effects from Wv-vs-Wk contextual value-source effects while keeping historical Value Embedding reproduction in a distinct source-fidelity lane.",
+  "dependencies": {
+    "required": [
+      "VAL-001 frozen reference"
+    ],
+    "optional_later": [
+      "PyTorch adapter",
+      "training harness"
+    ]
+  },
+  "primary_causal_lane": {
+    "memory_definition": {
+      "symbol": "M",
+      "equation": "M = HeadwiseRMSNorm(E_layer[token])",
+      "requirement": "C01 and C11 must use the same memory table, token IDs, normalization parameters, width, and dtype contract."
+    },
+    "factors": {
+      "contextual_source": [
+        "Wv",
+        "Wk"
+      ],
+      "token_memory": [
+        "OFF",
+        "ON"
+      ]
+    },
+    "cells": [
+      {
+        "id": "C00",
+        "name": "Standard",
+        "contextual_source": "Wv",
+        "token_memory": "OFF",
+        "equation": "V = X Wv"
+      },
+      {
+        "id": "C01",
+        "name": "Add-memory",
+        "contextual_source": "Wv",
+        "token_memory": "ON",
+        "equation": "V = X Wv + M"
+      },
+      {
+        "id": "C10",
+        "name": "Key-reuse-only",
+        "contextual_source": "Wk",
+        "token_memory": "OFF",
+        "equation": "V = X Wk"
+      },
+      {
+        "id": "C11",
+        "name": "Memory Attention",
+        "contextual_source": "Wk",
+        "token_memory": "ON",
+        "equation": "V = X Wk + M"
+      }
+    ],
+    "contrasts": {
+      "memory_effect_at_Wv": "Y(C01) - Y(C00)",
+      "memory_effect_at_Wk": "Y(C11) - Y(C10)",
+      "source_effect_without_memory": "Y(C10) - Y(C00)",
+      "source_effect_with_memory": "Y(C11) - Y(C01)",
+      "interaction": "[Y(C11) - Y(C10)] - [Y(C01) - Y(C00)]"
+    }
+  },
+  "historical_lane": {
+    "id": "HIST-VE",
+    "role": "source_fidelity",
+    "equation": "V = (1 - lambda) * (X Wv) + lambda * E_layer[token]",
+    "lambda": {
+      "scope": "per attention layer in inspected implementation",
+      "initialization": 0.5,
+      "learned": true
+    },
+    "memory_normalization": "No separate RMSNorm is applied to E_layer[token] in the inspected mixing line.",
+    "source": {
+      "cited_by_memory_attention": "KoszarskyB. Layerwise token value embeddings. X post, 2024.",
+      "repository": "KellerJordan/modded-nanogpt",
+      "path": "records/track_1_short/2024-12-04_ValueEmbed/train_gpt2.py",
+      "inspected_repository_commit": "bc3a0c2d640d0d73dedaef87eae26148d2e32afb",
+      "file_blob": "c3e21231926be6904e79720ffb19895c5493ed1c"
+    }
+  },
+  "not_identified_by_primary_factorial": [
+    "generic dedicated-Wv removal/projection-sharing effect versus K-specific reuse effect",
+    "trained-model quality",
+    "parameter-matched fairness",
+    "latency or residency benefit"
+  ],
+  "planned_acceptance_checks": [
+    "C00 matches dedicated Wv projection",
+    "C01 - C00 equals M",
+    "C11 - C10 equals the same M",
+    "C10 contains Wk-derived contextual content and no Wv contribution",
+    "C11 matches the VAL-001 Memory Attention construction",
+    "factorial contrast arithmetic is internally consistent",
+    "HIST-VE reproduces the source-pinned learned-lambda equation",
+    "malformed fields and shapes fail closed as INVALID",
+    "intentional source swaps or post-RoPE misuse are detected"
+  ],
+  "execution_order": [
+    "freeze tensor/algebra contract",
+    "known-answer causal fixtures",
+    "factorial contrast checks",
+    "historical source-fidelity fixture",
+    "framework adapter only when a later experiment requires it"
+  ]
+}

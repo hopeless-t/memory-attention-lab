@@ -30,7 +30,7 @@ VAL-001 Memory Attention algebra
     FROZEN REFERENCE — PASS
 
 VAL-002 value-source decomposition
-    NEXT
+    DESIGN FROZEN — EXECUTOR NOT YET IMPLEMENTED
 
 BENCH-001 residency baseline
     NOT STARTED
@@ -417,34 +417,67 @@ No performance advantage is claimed at this stage.
 
 ### VAL-002 — Value-Source Decomposition
 
-Separate the architectural ingredients that are otherwise easy to confound.
+Separate architectural ingredients that are otherwise easy to confound.
 
-The first controlled family is:
+Source recovery changed the original three-way sketch.
 
-~~~text
-Standard
-    V = X Wv
-
-Value-Embedding control
-    V = X Wv + E[token]
-
-Memory Attention
-    V = X Wk + E[token]
-~~~
-
-Exact normalization, scaling, and dimensional contracts will be frozen in the experiment specification.
-
-This validation exists to distinguish at least three possible causes of an observed result:
+The historical Layerwise Token Value Embedding implementation cited by Memory
+Attention uses a learned mixture:
 
 ~~~text
-additional token-indexed capacity
-removal of Wv
-reuse of K as contextual value content
+V_hist =
+    (1 - lambda) * X Wv
+    +
+    lambda * E_layer[token]
 ~~~
 
-Additional nearby mechanisms such as MoVE-like mixing are candidates only if the first comparison leaves an unresolved question.
+That is valuable for lineage reproduction, but it is not the cleanest causal
+control for "memory added or not."
 
-They are not required initial implementations.
+VAL-002 therefore uses two lanes.
+
+#### Primary causal lane
+
+~~~text
+                     memory OFF           memory ON
+
+Wv contextual source    X Wv               X Wv + M
+
+Wk contextual source    X Wk               X Wk + M
+
+M = Norm(E_layer[token])
+~~~
+
+This supports controlled contrasts for:
+
+~~~text
+token-memory main effect
+Wv-vs-Wk contextual-source main effect
+memory x source interaction
+~~~
+
+The fourth cell is Memory Attention.
+
+This design still does not fully separate removal of Wv from K-specific reuse,
+because exact Memory Attention couples those changes. A later sentinel control
+may be added only if this ambiguity becomes decision-relevant.
+
+#### Historical lineage lane
+
+Separately reproduce the source-pinned 2024-12-04 Value Embedding mechanism:
+
+~~~text
+V_hist =
+    (1 - lambda) * X Wv
+    +
+    lambda * E_layer[token]
+~~~
+
+This lane answers a source-fidelity question and is not pooled as if it were the
+same intervention as the additive causal control.
+
+Additional nearby mechanisms such as MoVE-like mixing remain deferred unless
+the primary experiment leaves an unresolved question.
 
 ### BENCH-001 — Residency Baseline
 
