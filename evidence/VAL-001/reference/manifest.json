@@ -1,0 +1,18 @@
+{
+  "experiment_id": "VAL-001",
+  "provenance": {
+    "git_commit": "f941844c985a0857dc93b6cc321fa40427856f08",
+    "numpy": "2.5.3",
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": "3.12.14"
+  },
+  "schema_version": 1,
+  "source": {
+    "paper": "arXiv:2609.28399",
+    "upstream_memory_attn_blob": "2aa486dffb678c4bcf7acde21bf67fba571afb2d",
+    "upstream_rmsnorm_blob": "0baae73d3fdeabaf399705c5ab20d80a3a0e903f",
+    "upstream_rotary_blob": "fc15ad6de8422af8ee2b1a4845a6c56779037391"
+  },
+  "spec_sha256": "af5b18a75336604f1f0121a1c2b86b8fa8b72af412f2fb5b91b850606c83b99e",
+  "status": "PASS"
+}
