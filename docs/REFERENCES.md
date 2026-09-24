@@ -110,21 +110,43 @@ VALUE-STREAM REUSE CONTEXT
 HISTORICAL PRECEDENT
 ~~~
 
-### [TOKEN-VALUE-EMBED] Layerwise Token Value Embeddings
+### [TOKEN-VALUE-EMBED-2024] Layerwise Token Value Embeddings
 
-The Memory Attention paper explicitly discusses layerwise token value embeddings as nearby prior work.
+The Memory Attention paper cites:
 
-**Current source status**
+- KoszarskyB. *Layerwise token value embeddings*. X post, 2024.
+- The citation describes the announcement accompanying the modded-nanogpt implementation.
+
+The implementation lineage is anchored here to the modded-nanogpt 2024-12-04
+Value Embeddings record:
+
+- Repository: https://github.com/KellerJordan/modded-nanogpt
+- Record path: records/track_1_short/2024-12-04_ValueEmbed/train_gpt2.py
+- Inspected repository commit: bc3a0c2d640d0d73dedaef87eae26148d2e32afb
+- Inspected file blob: c3e21231926be6904e79720ffb19895c5493ed1c
+
+The project history lists the 2024-12-04 record as "Value Embeddings" and
+credits @KoszarskyB.
+
+The inspected implementation uses a layer-indexed token embedding and a learned
+scalar mix with the ordinary value projection:
 
 ~~~text
-CANONICAL STANDALONE SOURCE:
-    TO BE RESOLVED
-
-USE IN THIS REPOSITORY:
-    EXPERIMENTAL CONTROL
+V_hist = (1 - lambda) * (X Wv) + lambda * E_layer[token]
 ~~~
 
-Do not silently replace this unresolved source lineage with a secondary citation.
+The inspected record initializes lambda to 0.5.
+
+**Repository role**
+
+~~~text
+DIRECTLY CITED PRIOR MECHANISM
+HISTORICAL REPRODUCTION LANE
+NOT THE SOLE CAUSAL CONTROL
+~~~
+
+Later modded-nanogpt value-embedding variants are separate historical revisions
+and should not be silently substituted for the frozen 2024-12-04 anchor.
 
 ---
 
@@ -288,9 +310,10 @@ For every claim copied into CLAIM_MAP.md:
 ## Open source-resolution tasks
 
 ~~~text
-REF-RQ-001
-Resolve the canonical source / implementation lineage for the exact
-"Layerwise Token Value Embeddings" mechanism referenced by Memory Attention.
+REF-RQ-001 — RESOLVED FOR INITIAL VAL-002 DESIGN
+The Memory Attention citation is KoszarskyB's 2024 X-post announcement.
+The executable implementation anchor is the modded-nanogpt 2024-12-04
+Value Embeddings record pinned above.
 
 REF-RQ-002
 When executable comparisons begin, pin exact upstream commits for:
