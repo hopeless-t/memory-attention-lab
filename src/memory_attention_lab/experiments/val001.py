@@ -81,6 +81,45 @@ def _require_exact_keys(name: str, obj: dict[str, Any], expected: set[str]) -> N
         )
 
 
+def _finite_scalar(
+    name: str,
+    value: Any,
+    *,
+    strictly_positive: bool = False,
+    nonnegative: bool = False,
+) -> float:
+    if isinstance(value, bool):
+        raise SpecError(f"{name} must be numeric, not boolean")
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as exc:
+        raise SpecError(f"{name} must be numeric") from exc
+    if not np.isfinite(number):
+        raise SpecError(f"{name} must be finite")
+    if strictly_positive and number <= 0:
+        raise SpecError(f"{name} must be > 0")
+    if nonnegative and number < 0:
+        raise SpecError(f"{name} must be >= 0")
+    return number
+
+
+def _finite_array(
+    name: str,
+    value: Any,
+    *,
+    ndim: int,
+) -> np.ndarray:
+    try:
+        array = np.asarray(value, dtype=np.float64)
+    except (TypeError, ValueError) as exc:
+        raise SpecError(f"{name} must be a rectangular numeric array") from exc
+    if array.ndim != ndim:
+        raise SpecError(f"{name} must have ndim={ndim}, got {array.ndim}")
+    if not np.all(np.isfinite(array)):
+        raise SpecError(f"{name} contains non-finite values")
+    return array
+
+
 def load_spec(path: Path) -> tuple[dict[str, Any], str]:
     raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
@@ -112,15 +151,58 @@ def load_spec(path: Path) -> tuple[dict[str, Any], str]:
         raise SpecError("head_dim must be a positive integer")
     if p["head_dim"] % 2:
         raise SpecError("head_dim must be even for the frozen RoPE contract")
-    if not np.isfinite(p["eps"]) or p["eps"] <= 0:
-        raise SpecError("eps must be finite and > 0")
-    if not np.isfinite(p["rope_base"]) or p["rope_base"] <= 0:
-        raise SpecError("rope_base must be finite and > 0")
+    _finite_scalar("eps", p["eps"], strictly_positive=True)
+    _finite_scalar("rope_base", p["rope_base"], strictly_positive=True)
 
     a = spec["acceptance"]
     for key in ("atol", "rtol", "min_post_rope_guard_delta"):
-        if not np.isfinite(a[key]) or a[key] < 0:
-            raise SpecError(f"{key} must be finite and >= 0")
+        _finite_scalar(key, a[key], nonnegative=True)
+
+    f = spec["fixture"]
+    ids_raw = f["token_ids"]
+    if (
+        not isinstance(ids_raw, list)
+        or len(ids_raw) == 0
+        or any(type(item) is not int for item in ids_raw)
+    ):
+        raise SpecError("token_ids must be a non-empty list of integers")
+    token_ids = np.asarray(ids_raw, dtype=np.int64)
+    t = token_ids.shape[0]
+
+    positions = _finite_array("positions", f["positions"], ndim=1)
+    if positions.shape != (t,):
+        raise SpecError(f"positions must have shape ({t},)")
+
+    norm_weight = _finite_array("norm_weight", f["norm_weight"], ndim=1)
+    if norm_weight.shape != (p["head_dim"],):
+        raise SpecError(
+            f"norm_weight must have shape ({p['head_dim']},)"
+        )
+
+    memory_table = _finite_array("memory_table", f["memory_table"], ndim=2)
+    kv_dim = p["num_kv_heads"] * p["head_dim"]
+    if memory_table.shape[0] == 0 or memory_table.shape[1] != kv_dim:
+        raise SpecError(
+            f"memory_table must have shape [vocab, {kv_dim}] with vocab > 0"
+        )
+    if np.any(token_ids < 0) or np.any(token_ids >= memory_table.shape[0]):
+        raise SpecError("token_ids contain an out-of-range memory address")
+
+    content_keys = _finite_array("content_keys", f["content_keys"], ndim=3)
+    expected_shape = (t, p["num_kv_heads"], p["head_dim"])
+    if content_keys.shape != expected_shape:
+        raise SpecError(
+            f"content_keys must have shape {expected_shape}, got {content_keys.shape}"
+        )
+
+    e = spec["expected"]
+    for key in ("normalized_memory", "constructed_values", "rotated_keys"):
+        expected = _finite_array(f"expected.{key}", e[key], ndim=3)
+        if expected.shape != expected_shape:
+            raise SpecError(
+                f"expected.{key} must have shape {expected_shape}, "
+                f"got {expected.shape}"
+            )
 
     return spec, digest
 
