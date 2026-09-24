@@ -116,7 +116,8 @@ The initial literature map distinguishes several nearby mechanisms instead of tr
 
 ~~~text
 Value Embedding
-    contextual V + token-specific memory
+    learned mixture of contextual V projection
+    and token-specific embedding
     original value projection remains
 
 Per-Layer Embeddings / DeepEmbed
@@ -417,34 +418,46 @@ No performance advantage is claimed at this stage.
 
 ### VAL-002 — Value-Source Decomposition
 
-Separate the architectural ingredients that are otherwise easy to confound.
+Separate source fidelity from causal decomposition.
 
-The first controlled family is:
+The source-fidelity lane preserves the historical Value Embeddings fusion found
+in the 2024-12-04 modded-nanogpt record:
 
 ~~~text
 Standard
-    V = X Wv
+    V = Vproj
 
-Value-Embedding control
-    V = X Wv + E[token]
+Historical Value Embeddings
+    V = (1-lambda) * Vproj + lambda * E[token]
 
-Memory Attention
-    V = X Wk + E[token]
+Memory Attention reference
+    V = Kcontent + M
 ~~~
 
-Exact normalization, scaling, and dimensional contracts will be frozen in the experiment specification.
-
-This validation exists to distinguish at least three possible causes of an observed result:
+The causal-factorial lane is deliberately synthetic:
 
 ~~~text
-additional token-indexed capacity
-removal of Wv
-reuse of K as contextual value content
+C00 = Vproj
+C01 = Vproj + M
+C10 = Kcontent
+C11 = Kcontent + M
 ~~~
 
-Additional nearby mechanisms such as MoVE-like mixing are candidates only if the first comparison leaves an unresolved question.
+C01 is **not** presented as the historical Value Embeddings method.
 
-They are not required initial implementations.
+It exists so the same frozen memory contribution M can be used to separate:
+
+~~~text
+memory addition
+Vproj -> Kcontent substitution
+their fixed-input additive interaction
+~~~
+
+Exact scaling, normalization, dimensional, and authority contracts are frozen
+in the VAL-002 specification.
+
+Additional nearby mechanisms such as MoVE-like mixing remain deferred unless
+the minimal control family leaves a blocking ambiguity.
 
 ### BENCH-001 — Residency Baseline
 
