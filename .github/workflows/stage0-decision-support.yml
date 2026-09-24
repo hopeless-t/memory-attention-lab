@@ -1,0 +1,62 @@
+name: Stage 0 Decision Support
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - research/stage0-lineage
+    paths:
+      - "research/stage0_sequence_mc.py"
+      - "research/decisions/DS-001-stage0-sequence.md"
+      - ".github/workflows/stage0-decision-support.yml"
+  pull_request:
+    paths:
+      - "research/stage0_sequence_mc.py"
+      - "research/decisions/DS-001-stage0-sequence.md"
+      - ".github/workflows/stage0-decision-support.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  stage0-sequence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install scientific dependency
+        run: python -m pip install "numpy>=2.0,<3"
+
+      - name: Run 1.5M-sample sequence stress test
+        run: |
+          python research/stage0_sequence_mc.py \
+            --samples 300000 \
+            --seed 20260925 \
+            --expected-winner "S1 lineage-first controls"
+
+      - name: Publish result in job summary
+        if: always()
+        run: |
+          if [ -f runs/decision-support/stage0-sequence.md ]; then
+            cat runs/decision-support/stage0-sequence.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload structured decision-support evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage0-decision-support
+          path: |
+            runs/decision-support/stage0-sequence.json
+            runs/decision-support/stage0-sequence.md
+          if-no-files-found: error
+          retention-days: 7
