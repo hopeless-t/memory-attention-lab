@@ -20,7 +20,33 @@ The working thesis is:
 
 This is a research hypothesis and design principle, not an established result.
 
-Memory Attention provides a concrete place to test it because it changes both how attention values are constructed and where part of the model state may live.
+## Current status
+
+~~~text
+Stage 0 literature / claim lineage
+    COMPLETE
+
+VAL-001 Memory Attention algebra
+    FROZEN REFERENCE — PASS
+
+VAL-002 value-source decomposition
+    NEXT
+
+BENCH-001 residency baseline
+    NOT STARTED
+
+BENCH-002 value reconstruction / MA-Recall
+    NOT STARTED
+
+EXP-001 controlled small-model comparison
+    NOT STARTED
+~~~
+
+The reviewed VAL-001 reference evidence is stored under
+`evidence/VAL-001/reference/`. Its PASS status validates only the frozen
+numerical contract and does not establish quality or performance superiority.
+
+Memory Attention provides a concrete place to test the broader thesis because it changes both how attention values are constructed and where part of the model state may live.
 
 ## Why this project exists
 
