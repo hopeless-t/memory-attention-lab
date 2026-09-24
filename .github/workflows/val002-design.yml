@@ -1,0 +1,70 @@
+name: VAL-002 Design
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - research/val002-design
+    paths:
+      - "research/val002_control_mc.py"
+      - "research/decisions/DS-003-val002-controls.md"
+      - "docs/VAL-002.md"
+      - "docs/REFERENCES.md"
+      - "docs/LITERATURE_MAP.md"
+      - "docs/CLAIM_MAP.md"
+      - "README.md"
+      - ".github/workflows/val002-design.yml"
+  pull_request:
+    paths:
+      - "research/val002_control_mc.py"
+      - "research/decisions/DS-003-val002-controls.md"
+      - "docs/VAL-002.md"
+      - "docs/REFERENCES.md"
+      - "docs/LITERATURE_MAP.md"
+      - "docs/CLAIM_MAP.md"
+      - "README.md"
+      - ".github/workflows/val002-design.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  control-family:
+    name: control-family decision support / 1.5M states
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install NumPy
+        run: python -m pip install "numpy>=2.0,<3"
+
+      - name: Run VAL-002 control-family stress test
+        run: |
+          python research/val002_control_mc.py \
+            --samples 300000 \
+            --seed 20260925
+
+      - name: Publish decision support in job summary
+        if: always()
+        run: |
+          if [ -f runs/decision-support/val002-controls/result.md ]; then
+            cat runs/decision-support/val002-controls/result.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload small decision-support artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: val002-control-decision-support
+          path: runs/decision-support/val002-controls/
+          if-no-files-found: error
+          retention-days: 7
