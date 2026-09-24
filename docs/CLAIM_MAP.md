@@ -507,25 +507,75 @@ CONSISTENT
 
 ---
 
-## CTRL-005 — Value augmentation is not equivalent to replacing Wv
+## CTRL-005 — Historical Value Embedding is not the same as the clean additive memory control
 
 **Sources**
 
-- Layerwise token value embeddings as discussed by Memory Attention.
+- KoszarskyB, *Layerwise token value embeddings*, X post (2024), as cited by Memory Attention.
+- KellerJordan/modded-nanogpt, 2024-12-04 Value Embeddings record.
 - MoVE, arXiv:2601.22887.
 - Memory Attention, arXiv:2609.28399.
 
-**Local interpretation**
+**Source recovery**
 
-At minimum the following are separate mechanisms:
+The inspected 2024-12-04 modded-nanogpt record implements:
 
 ~~~text
-A. V = X Wv
-B. V = X Wv + memory
-C. V = X Wk + memory
+V_hist =
+    (1 - lambda) * X Wv
+    +
+    lambda * E_layer[token]
 ~~~
 
-If C outperforms A, B is needed to distinguish extra memory capacity from the replacement/reuse mechanism.
+with a learned scalar lambda initialized to 0.5.
+
+Therefore the historical mechanism changes both:
+
+~~~text
+token-indexed content
+and
+the mixing / scaling of the ordinary value path
+~~~
+
+relative to Standard Attention.
+
+**Local interpretation**
+
+VAL-002 must not use one Value Embedding condition as if it simultaneously
+provided exact historical reproduction and a minimal causal intervention.
+
+The primary causal family is:
+
+~~~text
+C00:
+    V = X Wv
+
+C01:
+    V = X Wv + M
+
+C10:
+    V = X Wk
+
+C11:
+    V = X Wk + M
+
+M = Norm(E_layer[token])
+~~~
+
+The historical learned-lambda mechanism is a separate source-fidelity lane.
+
+**Important limitation**
+
+The source factor:
+
+~~~text
+Wv -> Wk
+~~~
+
+couples removal of the dedicated Wv projection with reuse of K.
+
+Therefore the primary factorial does not by itself distinguish a generic
+projection-sharing/removal effect from a K-specific reuse effect.
 
 **Test**
 
@@ -604,7 +654,9 @@ NOT_TESTED
 
 ## HYP-003 — Value-source decomposition changes interpretation of quality gains
 
-A value-embedding control will materially change how small-model quality differences between Standard Attention and Memory Attention should be interpreted.
+The 2 x 2 memory/source factorial, plus a separate historical Value Embedding
+lane, will materially change how small-model quality differences between
+Standard Attention and Memory Attention should be interpreted.
 
 **Test**
 
@@ -655,7 +707,7 @@ NOT_TESTED
 | CTRL-002 | prior-art boundary | BENCH-001 | CONSISTENT |
 | CTRL-003 | systems hypothesis from sources | BENCH-001 | NOT_TESTED |
 | CTRL-004 | prior-art boundary | BENCH-002 | CONSISTENT |
-| CTRL-005 | experimental control | VAL-002 + EXP-001 | NOT_TESTED |
+| CTRL-005 | experimental-control boundary | VAL-002 + EXP-001 | NOT_TESTED |
 | HYP-001 | local hypothesis | BENCH-001 | NOT_TESTED |
 | HYP-002 | local hypothesis | BENCH-002 | NOT_TESTED |
 | HYP-003 | local hypothesis | VAL-002 + EXP-001 | NOT_TESTED |
