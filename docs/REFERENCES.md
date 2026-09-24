@@ -110,21 +110,49 @@ VALUE-STREAM REUSE CONTEXT
 HISTORICAL PRECEDENT
 ~~~
 
-### [TOKEN-VALUE-EMBED] Layerwise Token Value Embeddings
+### [TOKEN-VALUE-EMBED-2024] Layerwise Token Value Embeddings / modded-nanogpt Value Embeddings
 
-The Memory Attention paper explicitly discusses layerwise token value embeddings as nearby prior work.
+The Memory Attention paper cites KoszarskyB (2024), *Layerwise token value embeddings*, as nearby prior work.
+
+The modded-nanogpt project records a **Value Embeddings** improvement on 2024-12-04 and credits @KoszarskyB. The preserved implementation mixes the ordinary projected value with a token-indexed embedding using a learnable scalar:
+
+~~~text
+V_hist = (1 - lambda) * Vproj + lambda * E[token]
+~~~
+
+The archived record initializes lambda to 0.5.
+
+**Frozen implementation lineage for VAL-002**
+
+~~~text
+repository:
+    KellerJordan/modded-nanogpt
+
+repository ref:
+    bc3a0c2d640d0d73dedaef87eae26148d2e32afb
+
+2024-12-04 ValueEmbed script blob:
+    c3e21231926be6904e79720ffb19895c5493ed1c
+
+README blob:
+    7df95e21a027b5f6db4f3b6c20b6b7e7805a56b6
+~~~
 
 **Current source status**
 
 ~~~text
-CANONICAL STANDALONE SOURCE:
-    TO BE RESOLVED
+IMPLEMENTATION LINEAGE FOR VAL-002:
+    RESOLVED
+
+STANDALONE ARCHIVAL PAPER FOR THE ORIGINAL RECORD:
+    NOT ESTABLISHED BY THIS REPOSITORY
 
 USE IN THIS REPOSITORY:
-    EXPERIMENTAL CONTROL
+    SOURCE-FIDELITY CONTROL
 ~~~
 
-Do not silently replace this unresolved source lineage with a secondary citation.
+The repository must not silently replace the historical learned-mix formula with
+a synthetic additive control.
 
 ---
 
@@ -288,9 +316,10 @@ For every claim copied into CLAIM_MAP.md:
 ## Open source-resolution tasks
 
 ~~~text
-REF-RQ-001
-Resolve the canonical source / implementation lineage for the exact
-"Layerwise Token Value Embeddings" mechanism referenced by Memory Attention.
+REF-RQ-001 — RESOLVED FOR VAL-002 IMPLEMENTATION LINEAGE
+Memory Attention cites KoszarskyB (2024), and the modded-nanogpt 2024-12-04
+Value Embeddings record provides a preserved implementation and attribution.
+No standalone archival paper is assumed.
 
 REF-RQ-002
 When executable comparisons begin, pin exact upstream commits for:
