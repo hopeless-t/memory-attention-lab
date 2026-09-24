@@ -2,7 +2,7 @@
 """Decision-support Monte Carlo for Stage 0 research sequencing.
 
 This is engineering decision support, not a scientific probability model.
-The scores and weights are explicit priors used to stress-test whether the
+Scores and weights are explicit priors used to stress-test whether the
 preferred sequence is stable under reasonable perturbations.
 """
 
@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import platform
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -63,15 +65,30 @@ BASE_SCORES = {
     "S4 mixed": [8.5, 9.0, 9.0, 9.5, 9.0, 9.0],
 }
 
-BASE_WEIGHTS = np.array([0.22, 0.19, 0.17, 0.15, 0.13, 0.14], dtype=float)
+SCENARIOS = {
+    "balanced": [0.22, 0.19, 0.17, 0.15, 0.13, 0.14],
+    "causal_identifiability_heavy": [0.36, 0.20, 0.12, 0.10, 0.08, 0.14],
+    "systems_relevance_heavy": [0.16, 0.13, 0.13, 0.30, 0.14, 0.14],
+    "reproducibility_heavy": [0.18, 0.18, 0.15, 0.12, 0.10, 0.27],
+    "novelty_heavy": [0.15, 0.14, 0.13, 0.13, 0.31, 0.14],
+}
 
 
-def simulate(samples: int, seed: int, score_sigma: float, concentration: float) -> dict:
+def simulate_scenario(
+    *,
+    samples: int,
+    seed: int,
+    score_sigma: float,
+    concentration: float,
+    base_weights: list[float],
+) -> dict:
     rng = np.random.default_rng(seed)
     names = list(SEQUENCES)
     scores = np.array([BASE_SCORES[name] for name in names], dtype=float)
+    weights0 = np.array(base_weights, dtype=float)
+    weights0 = weights0 / weights0.sum()
 
-    weights = rng.dirichlet(BASE_WEIGHTS * concentration, size=samples)
+    weights = rng.dirichlet(weights0 * concentration, size=samples)
     noise = rng.normal(0.0, score_sigma, size=(samples, len(names), len(CRITERIA)))
     sampled_scores = np.clip(scores[None, :, :] + noise, 0.0, 10.0)
     utility = (sampled_scores * weights[:, None, :]).sum(axis=2)
@@ -86,22 +103,41 @@ def simulate(samples: int, seed: int, score_sigma: float, concentration: float) 
         for i, name in enumerate(names)
     }
 
-    winner = max(win_rates, key=win_rates.get)
+    return {
+        "base_weights": dict(zip(CRITERIA, weights0.tolist())),
+        "win_rates": win_rates,
+        "mean_utility": mean_utility,
+        "winner": max(win_rates, key=win_rates.get),
+    }
+
+
+def simulate(samples: int, seed: int, score_sigma: float, concentration: float) -> dict:
+    scenario_results = {}
+    for index, (name, weights) in enumerate(SCENARIOS.items()):
+        scenario_results[name] = simulate_scenario(
+            samples=samples,
+            seed=seed + index,
+            score_sigma=score_sigma,
+            concentration=concentration,
+            base_weights=weights,
+        )
 
     return {
         "kind": "engineering_decision_support",
         "scientific_probability": False,
-        "samples": samples,
+        "samples_per_scenario": samples,
         "seed": seed,
         "score_sigma": score_sigma,
         "dirichlet_concentration": concentration,
         "criteria": CRITERIA,
-        "base_weights": dict(zip(CRITERIA, BASE_WEIGHTS.tolist())),
         "base_scores": BASE_SCORES,
         "sequences": SEQUENCES,
-        "win_rates": win_rates,
-        "mean_utility": mean_utility,
-        "winner": winner,
+        "scenarios": scenario_results,
+        "environment": {
+            "python": sys.version.split()[0],
+            "numpy": np.__version__,
+            "platform": platform.platform(),
+        },
     }
 
 
@@ -111,18 +147,35 @@ def markdown(result: dict) -> str:
         "",
         "> Engineering decision support only. These are not scientific probabilities.",
         "",
-        f"- samples: {result['samples']}",
-        f"- seed: {result['seed']}",
-        f"- winner: **{result['winner']}**",
+        f"- samples per scenario: {result['samples_per_scenario']}",
+        f"- base seed: {result['seed']}",
+        f"- Python: {result['environment']['python']}",
+        f"- NumPy: {result['environment']['numpy']}",
         "",
-        "| Sequence | Win rate | Mean utility |",
-        "| --- | ---: | ---: |",
+        "| Scenario | Winner | S1 | S2 | S3 | S4 |",
+        "| --- | --- | ---: | ---: | ---: | ---: |",
     ]
-    for name in SEQUENCES:
+
+    short = {
+        "S1 lineage-first controls": "S1",
+        "S2 systems-first": "S2",
+        "S3 recall-first after controls": "S3",
+        "S4 mixed": "S4",
+    }
+    for scenario_name, scenario in result["scenarios"].items():
+        rates = scenario["win_rates"]
         lines.append(
-            f"| {name} | {result['win_rates'][name]:.4%} | "
-            f"{result['mean_utility'][name]:.4f} |"
+            "| "
+            + scenario_name
+            + " | "
+            + scenario["winner"]
+            + " | "
+            + " | ".join(
+                f"{rates[name]:.2%}" for name in SEQUENCES
+            )
+            + " |"
         )
+
     lines.extend(
         [
             "",
@@ -166,12 +219,18 @@ def main() -> int:
 
     print(markdown(result))
 
-    if args.expected_winner is not None and result["winner"] != args.expected_winner:
-        print(
-            f"Expected winner {args.expected_winner!r}, "
-            f"observed {result['winner']!r}"
-        )
-        return 2
+    if args.expected_winner is not None:
+        failures = [
+            name
+            for name, scenario in result["scenarios"].items()
+            if scenario["winner"] != args.expected_winner
+        ]
+        if failures:
+            print(
+                f"Expected winner {args.expected_winner!r}; "
+                f"different winner in scenarios: {failures}"
+            )
+            return 2
 
     return 0
 
