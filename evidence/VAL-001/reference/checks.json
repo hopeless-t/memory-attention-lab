@@ -1,0 +1,30 @@
+{
+  "folded_memory_equivalence": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "known_answer_constructed_values": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "known_answer_normalized_memory": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "known_answer_rotated_keys": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "pre_rope_value_guard": {
+    "minimum_required_delta": 0.1,
+    "passed": true,
+    "wrong_post_rope_value_max_delta": 1.1667631545428359
+  },
+  "rope_roundtrip": {
+    "max_abs_error": 2.220446049250313e-16,
+    "passed": true
+  },
+  "same_token_same_memory_different_context": {
+    "passed": true
+  }
+}
