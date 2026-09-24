@@ -187,15 +187,28 @@ scope/cost-heavy
 future-training-heavy
 ~~~
 
-Frozen design-run expectations:
+Fresh-run result on GitHub Actions:
 
-| Scenario | Expected winner |
-| --- | --- |
-| balanced | C dual-lane |
-| causal-heavy | C dual-lane |
-| lineage-heavy | C dual-lane |
-| scope/cost-heavy | B factorial-only |
-| future-training-heavy | C dual-lane |
+| Scenario | A historical-only | B factorial-only | C dual-lane | D broad-zoo | Winner |
+| --- | ---: | ---: | ---: | ---: | --- |
+| balanced | 0.00% | 7.16% | 92.84% | 0.00% | C |
+| causal-heavy | 0.00% | 14.57% | 85.43% | 0.00% | C |
+| lineage-heavy | 0.07% | 0.05% | 99.88% | 0.00% | C |
+| scope/cost-heavy | 0.80% | 86.30% | 12.89% | 0.00% | B |
+| future-training-heavy | 0.00% | 6.41% | 93.59% | 0.00% | C |
+
+Run:
+
+~~~text
+GitHub Actions run:
+36075177415
+
+samples per scenario:
+300,000
+
+total simulated decision states:
+1,500,000
+~~~
 
 The scope/cost counterexample is intentional.
 
