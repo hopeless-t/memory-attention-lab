@@ -88,12 +88,9 @@ def _finite_scalar(
     strictly_positive: bool = False,
     nonnegative: bool = False,
 ) -> float:
-    if isinstance(value, bool):
-        raise SpecError(f"{name} must be numeric, not boolean")
-    try:
-        number = float(value)
-    except (TypeError, ValueError) as exc:
-        raise SpecError(f"{name} must be numeric") from exc
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise SpecError(f"{name} must be a JSON number")
+    number = float(value)
     if not np.isfinite(number):
         raise SpecError(f"{name} must be finite")
     if strictly_positive and number <= 0:
@@ -137,6 +134,12 @@ def load_spec(path: Path) -> tuple[dict[str, Any], str]:
             raise SpecError(f"{name} must be an object")
         _require_exact_keys(name, spec[name], keys)
 
+    if not isinstance(spec["description"], str) or not spec["description"].strip():
+        raise SpecError("description must be a non-empty string")
+    for key, value in spec["source"].items():
+        if not isinstance(value, str) or not value.strip():
+            raise SpecError(f"source.{key} must be a non-empty string")
+
     if spec["schema_version"] != 1:
         raise SpecError("unsupported schema_version")
     if spec["experiment_id"] != "VAL-001":
@@ -145,9 +148,9 @@ def load_spec(path: Path) -> tuple[dict[str, Any], str]:
         raise SpecError("VAL-001 frozen reference dtype must be float64")
 
     p = spec["parameters"]
-    if not isinstance(p["num_kv_heads"], int) or p["num_kv_heads"] <= 0:
+    if type(p["num_kv_heads"]) is not int or p["num_kv_heads"] <= 0:
         raise SpecError("num_kv_heads must be a positive integer")
-    if not isinstance(p["head_dim"], int) or p["head_dim"] <= 0:
+    if type(p["head_dim"]) is not int or p["head_dim"] <= 0:
         raise SpecError("head_dim must be a positive integer")
     if p["head_dim"] % 2:
         raise SpecError("head_dim must be even for the frozen RoPE contract")
