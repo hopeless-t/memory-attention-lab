@@ -318,31 +318,42 @@ Direct lineage to every later token-value-embedding implementation must be estab
 
 ### D2 — Layerwise Token Value Embeddings
 
-**SOURCE STATUS**
+**SOURCES**
 
-Memory Attention explicitly discusses layerwise token value embeddings as a nearby mechanism.
+- Memory Attention cites KoszarskyB (2024), *Layerwise token value embeddings*.
+- modded-nanogpt records **Value Embeddings** on 2024-12-04 and credits @KoszarskyB.
+- The preserved 2024-12-04 implementation is frozen for VAL-002 source lineage.
 
-A canonical standalone paper/source for the exact implementation lineage is still being resolved by this repository.
+**SOURCE-DOCUMENTED MECHANISM**
 
-**MECHANISM**
+The preserved implementation keeps the ordinary projected value and mixes it
+with a token-indexed embedding using a learnable scalar:
 
 ~~~text
-contextual value projection
-+
-token-indexed value embedding
+V_hist = (1 - lambda) * Vproj + lambda * E[token]
 ~~~
+
+with lambda initialized to 0.5 in that record.
 
 **RELEVANCE**
 
-This is the most important initial control for separating:
+This resolves an important distinction for VAL-002:
 
 ~~~text
-effect of extra token-indexed capacity
-from
-effect of removing Wv
-from
-effect of reusing K as contextual value content
+historical/source-fidelity control
+    learned mixture:
+    (1-lambda) * Vproj + lambda * E[token]
+
+local causal-additive control
+    Vproj + M
 ~~~
+
+These are **not** the same method.
+
+The historical lane preserves prior-work fidelity.
+
+The local additive lane exists only to isolate the effect of adding the same
+Memory Attention memory contribution before replacing Vproj with Kcontent.
 
 **RELATIONSHIP**
 
