@@ -318,36 +318,93 @@ Direct lineage to every later token-value-embedding implementation must be estab
 
 ### D2 — Layerwise Token Value Embeddings
 
-**SOURCE STATUS**
+**SOURCE**
 
-Memory Attention explicitly discusses layerwise token value embeddings as a nearby mechanism.
+Memory Attention cites:
 
-A canonical standalone paper/source for the exact implementation lineage is still being resolved by this repository.
+- KoszarskyB, *Layerwise token value embeddings*, X post (2024), described as
+  the announcement accompanying the modded-nanogpt implementation.
 
-**MECHANISM**
+The implementation anchor used by this repository is:
 
 ~~~text
-contextual value projection
-+
-token-indexed value embedding
+KellerJordan/modded-nanogpt
+records/track_1_short/2024-12-04_ValueEmbed/train_gpt2.py
+repository commit:
+bc3a0c2d640d0d73dedaef87eae26148d2e32afb
+file blob:
+c3e21231926be6904e79720ffb19895c5493ed1c
+~~~
+
+**SOURCE-DOCUMENTED MECHANISM**
+
+The inspected record allocates token-indexed value embeddings for all 12 layers,
+chunks them by layer, computes the ordinary contextual value projection, then
+mixes the two using a learned scalar lambda:
+
+~~~text
+E_all = Embedding(vocab, d_model * 12)
+E_layer[token] = chunk(E_all[token], layer)
+
+V_proj = X Wv
+
+V_hist =
+    (1 - lambda) * V_proj
+    +
+    lambda * E_layer[token]
+~~~
+
+The inspected lambda is initialized to 0.5.
+
+The code attributes the token value embeddings to @KoszarskyB and notes
+inspiration from the Value Residual implementation.
+
+**IMPORTANT DISTINCTION**
+
+The historical mechanism is **not** the same intervention as the minimal
+additive control originally sketched by this repository:
+
+~~~text
+clean causal control:
+    X Wv + M
+
+historical Value Embedding:
+    (1 - lambda) * X Wv + lambda * E[token]
+~~~
+
+The learned mix changes scaling and parameterization in addition to adding
+token-indexed content.
+
+Therefore VAL-002 separates:
+
+~~~text
+CAUSAL LANE
+    controlled 2 x 2 memory/source factorial
+
+HISTORICAL LANE
+    source-faithful learned-lambda Value Embedding reproduction
 ~~~
 
 **RELEVANCE**
 
-This is the most important initial control for separating:
+The causal lane isolates whether a result is associated with:
 
 ~~~text
-effect of extra token-indexed capacity
-from
-effect of removing Wv
-from
-effect of reusing K as contextual value content
+token-indexed memory
+Wv-derived vs Wk-derived contextual value content
+their interaction
 ~~~
+
+The historical lane answers a different question:
+
+> Does the implementation cited by Memory Attention behave as documented under
+> our frozen fixture?
 
 **RELATIONSHIP**
 
 ~~~text
 EXPLICITLY_CITED
+HISTORICAL_PRECEDENT
 EXPERIMENTAL_CONTROL
 ~~~
 
