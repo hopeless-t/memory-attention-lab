@@ -10,6 +10,8 @@ on:
       - "research/val002_control_mc.py"
       - "research/decisions/DS-003-val002-controls.md"
       - "docs/VAL-002.md"
+      - "specs/VAL-002.json"
+      - "specs/VAL-002.json"
       - "docs/REFERENCES.md"
       - "docs/LITERATURE_MAP.md"
       - "docs/CLAIM_MAP.md"
