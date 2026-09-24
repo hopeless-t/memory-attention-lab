@@ -163,3 +163,13 @@ def test_wrong_expected_value_produces_scientific_fail():
 
     assert result["manifest"]["status"] == "FAIL"
     assert not result["checks"]["known_answer_constructed_values"]["passed"]
+
+
+def test_numeric_strings_do_not_silently_coerce(tmp_path: Path):
+    raw = json.loads(SPEC_PATH.read_text())
+    raw["parameters"]["eps"] = "1e-5"
+    bad = tmp_path / "bad-type.json"
+    bad.write_text(json.dumps(raw))
+
+    with pytest.raises(SpecError, match="JSON number"):
+        load_spec(bad)
