@@ -4,6 +4,7 @@
 > **Scientific authority:** NONE  
 > **Mainline implementation authority:** NONE  
 > **Decision date:** 2026-09-25
+> **Canonical Stage 0 merge:** da5b7ec40a4ee8a41dbaa6e4c610003f68c468f0
 
 ## Question
 
