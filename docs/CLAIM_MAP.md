@@ -176,18 +176,33 @@ optimization interactions
 
 **Required controls**
 
-At minimum:
+VAL-002 now separates two lanes.
+
+Source-fidelity lane:
 
 ~~~text
 Standard:
-    V = X Wv
+    V = Vproj
 
-Value-Embedding control:
-    V = X Wv + E[token]
+Historical Value Embeddings:
+    V = (1-lambda) * Vproj + lambda * E[token]
 
-Memory Attention:
-    V = X Wk + E[token]
+Memory Attention reference:
+    V = Kcontent + M
 ~~~
+
+Causal-factorial lane:
+
+~~~text
+C00 = Vproj
+C01 = Vproj + M
+C10 = Kcontent
+C11 = Kcontent + M
+~~~
+
+Here M is the **same frozen Memory Attention memory contribution** in C01 and
+C11. C01 is a local experimental control, not a claim about the historical
+Value Embeddings implementation.
 
 Training comparisons must also state exactly which budgets are matched.
 
@@ -517,15 +532,40 @@ CONSISTENT
 
 **Local interpretation**
 
-At minimum the following are separate mechanisms:
+Two different questions must remain separate.
+
+Historical/source-fidelity question:
 
 ~~~text
-A. V = X Wv
-B. V = X Wv + memory
-C. V = X Wk + memory
+Historical Value Embeddings:
+    V = (1-lambda) * Vproj + lambda * E[token]
 ~~~
 
-If C outperforms A, B is needed to distinguish extra memory capacity from the replacement/reuse mechanism.
+Causal-decomposition question:
+
+~~~text
+C00 = Vproj
+C01 = Vproj + M
+C10 = Kcontent
+C11 = Kcontent + M
+~~~
+
+The historical learned mixture and the local additive C01 control are not
+interchangeable.
+
+The factorial lane isolates, at fixed inputs:
+
+~~~text
+memory effect:
+    C01 - C00
+    C11 - C10
+
+contextual-source effect:
+    C10 - C00
+    C11 - C01
+~~~
+
+and provides an exact additive interaction check.
 
 **Test**
 
@@ -644,8 +684,8 @@ NOT_TESTED
 
 | Claim | Type | Primary experiment | Current assessment |
 | --- | --- | --- | --- |
-| MA-001 | source mechanism | VAL-001 | NOT_TESTED |
-| MA-002 | source inference claim | VAL-001 | NOT_TESTED |
+| MA-001 | source mechanism | VAL-001 | CONSISTENT |
+| MA-002 | source inference claim | VAL-001 | CONSISTENT |
 | MA-003 | source quality claim | VAL-002 + EXP-001 | NOT_TESTED |
 | MA-004 | source systems claim | BENCH-001 | NOT_TESTED |
 | MA-005 | source benchmark claim | BENCH-001 | NOT_TESTED |
