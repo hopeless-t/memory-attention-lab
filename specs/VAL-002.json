@@ -1,111 +1,71 @@
 {
   "schema_version": 1,
   "experiment_id": "VAL-002",
-  "status": "design_frozen",
-  "purpose": "Separate token-memory effects from Wv-vs-Wk contextual value-source effects while keeping historical Value Embedding reproduction in a distinct source-fidelity lane.",
-  "dependencies": {
-    "required": [
-      "VAL-001 frozen reference"
+  "description": "Dual-lane validation of historical Value Embeddings fusion and a local 2x2 causal value-source control family.",
+  "source": {
+    "memory_attention_paper": "arXiv:2609.28399",
+    "parent_val001_spec_sha256": "af5b18a75336604f1f0121a1c2b86b8fa8b72af412f2fb5b91b850606c83b99e",
+    "historical_repository": "KellerJordan/modded-nanogpt",
+    "historical_ref": "bc3a0c2d640d0d73dedaef87eae26148d2e32afb",
+    "historical_valueembed_blob": "c3e21231926be6904e79720ffb19895c5493ed1c",
+    "historical_readme_blob": "7df95e21a027b5f6db4f3b6c20b6b7e7805a56b6"
+  },
+  "parameters": {
+    "dtype": "float64",
+    "historical_lambda": 0.5
+  },
+  "fixture": {
+    "projected_values": [
+      [[0.3, -0.4, 0.8, 0.1], [-0.2, 0.9, -1.0, 0.6]],
+      [[0.7, 0.2, -0.3, 1.1], [-0.5, 0.4, 0.2, -0.8]],
+      [[1.5, -0.2, 0.0, -0.7], [0.3, -1.1, 0.5, 0.2]]
     ],
-    "optional_later": [
-      "PyTorch adapter",
-      "training harness"
+    "content_keys": [
+      [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]],
+      [[1.0, -1.0, 0.5, -0.5], [0.25, -0.75, 1.25, -1.5]],
+      [[-0.2, 0.7, -1.1, 0.4], [1.2, 0.0, -0.6, 0.9]]
+    ],
+    "ma_memory_contribution": [
+      [[1.199999040001152, 0.799999360000768, 0.0, 0.0], [0.0, 0.38461533909877915, 2.76923044151121, 0.0]],
+      [[1.4142100268524473, 0.0, 0.0, 2.8284200537048947], [0.0, 0.7071050134262237, 2.121315040278671, 0.0]],
+      [[1.199999040001152, 0.799999360000768, 0.0, 0.0], [0.0, 0.38461533909877915, 2.76923044151121, 0.0]]
+    ],
+    "historical_token_values": [
+      [[0.9, 0.1, -0.2, 0.6], [0.4, -0.6, 0.8, -0.3]],
+      [[-0.1, 1.2, 0.5, -0.4], [0.7, 0.3, -0.9, 1.0]],
+      [[0.2, -0.8, 1.1, 0.3], [-0.4, 0.6, 0.1, -1.2]]
     ]
   },
-  "primary_causal_lane": {
-    "memory_definition": {
-      "symbol": "M",
-      "equation": "M = HeadwiseRMSNorm(E_layer[token])",
-      "requirement": "C01 and C11 must use the same memory table, token IDs, normalization parameters, width, and dtype contract."
-    },
-    "factors": {
-      "contextual_source": [
-        "Wv",
-        "Wk"
-      ],
-      "token_memory": [
-        "OFF",
-        "ON"
-      ]
-    },
-    "cells": [
-      {
-        "id": "C00",
-        "name": "Standard",
-        "contextual_source": "Wv",
-        "token_memory": "OFF",
-        "equation": "V = X Wv"
-      },
-      {
-        "id": "C01",
-        "name": "Add-memory",
-        "contextual_source": "Wv",
-        "token_memory": "ON",
-        "equation": "V = X Wv + M"
-      },
-      {
-        "id": "C10",
-        "name": "Key-reuse-only",
-        "contextual_source": "Wk",
-        "token_memory": "OFF",
-        "equation": "V = X Wk"
-      },
-      {
-        "id": "C11",
-        "name": "Memory Attention",
-        "contextual_source": "Wk",
-        "token_memory": "ON",
-        "equation": "V = X Wk + M"
-      }
+  "expected": {
+    "historical_value_embedding": [
+      [[0.6, -0.15000000000000002, 0.30000000000000004, 0.35], [0.1, 0.15000000000000002, -0.09999999999999998, 0.15]],
+      [[0.3, 0.7, 0.1, 0.35000000000000003], [0.09999999999999998, 0.35, -0.35, 0.09999999999999998]],
+      [[0.85, -0.5, 0.55, -0.19999999999999998], [-0.05000000000000002, -0.25000000000000006, 0.3, -0.5]]
     ],
-    "contrasts": {
-      "memory_effect_at_Wv": "Y(C01) - Y(C00)",
-      "memory_effect_at_Wk": "Y(C11) - Y(C10)",
-      "source_effect_without_memory": "Y(C10) - Y(C00)",
-      "source_effect_with_memory": "Y(C11) - Y(C01)",
-      "interaction": "[Y(C11) - Y(C10)] - [Y(C01) - Y(C00)]"
-    }
+    "c00_projected_no_memory": [
+      [[0.3, -0.4, 0.8, 0.1], [-0.2, 0.9, -1.0, 0.6]],
+      [[0.7, 0.2, -0.3, 1.1], [-0.5, 0.4, 0.2, -0.8]],
+      [[1.5, -0.2, 0.0, -0.7], [0.3, -1.1, 0.5, 0.2]]
+    ],
+    "c01_projected_plus_memory": [
+      [[1.499999040001152, 0.39999936000076797, 0.8, 0.1], [-0.2, 1.2846153390987791, 1.7692304415112101, 0.6]],
+      [[2.1142100268524473, 0.2, -0.3, 3.9284200537048948], [-0.5, 1.1071050134262237, 2.3213150402786713, -0.8]],
+      [[2.6999990400011518, 0.599999360000768, 0.0, -0.7], [0.3, -0.7153846609012209, 3.26923044151121, 0.2]]
+    ],
+    "c10_key_no_memory": [
+      [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]],
+      [[1.0, -1.0, 0.5, -0.5], [0.25, -0.75, 1.25, -1.5]],
+      [[-0.2, 0.7, -1.1, 0.4], [1.2, 0.0, -0.6, 0.9]]
+    ],
+    "c11_key_plus_memory": [
+      [[1.299999040001152, 0.999999360000768, 0.3, 0.4], [0.5, 0.9846153390987791, 3.4692304415112103, 0.8]],
+      [[2.414210026852447, -1.0, 0.5, 2.3284200537048947], [0.25, -0.04289498657377633, 3.371315040278671, -1.5]],
+      [[0.999999040001152, 1.499999360000768, -1.1, 0.4], [1.2, 0.38461533909877915, 2.16923044151121, 0.9]]
+    ]
   },
-  "historical_lane": {
-    "id": "HIST-VE",
-    "role": "source_fidelity",
-    "equation": "V = (1 - lambda) * (X Wv) + lambda * E_layer[token]",
-    "lambda": {
-      "scope": "per attention layer in inspected implementation",
-      "initialization": 0.5,
-      "learned": true
-    },
-    "memory_normalization": "No separate RMSNorm is applied to E_layer[token] in the inspected mixing line.",
-    "source": {
-      "cited_by_memory_attention": "KoszarskyB. Layerwise token value embeddings. X post, 2024.",
-      "repository": "KellerJordan/modded-nanogpt",
-      "path": "records/track_1_short/2024-12-04_ValueEmbed/train_gpt2.py",
-      "inspected_repository_commit": "bc3a0c2d640d0d73dedaef87eae26148d2e32afb",
-      "file_blob": "c3e21231926be6904e79720ffb19895c5493ed1c"
-    }
-  },
-  "not_identified_by_primary_factorial": [
-    "generic dedicated-Wv removal/projection-sharing effect versus K-specific reuse effect",
-    "trained-model quality",
-    "parameter-matched fairness",
-    "latency or residency benefit"
-  ],
-  "planned_acceptance_checks": [
-    "C00 matches dedicated Wv projection",
-    "C01 - C00 equals M",
-    "C11 - C10 equals the same M",
-    "C10 contains Wk-derived contextual content and no Wv contribution",
-    "C11 matches the VAL-001 Memory Attention construction",
-    "factorial contrast arithmetic is internally consistent",
-    "HIST-VE reproduces the source-pinned learned-lambda equation",
-    "malformed fields and shapes fail closed as INVALID",
-    "intentional source swaps or post-RoPE misuse are detected"
-  ],
-  "execution_order": [
-    "freeze tensor/algebra contract",
-    "known-answer causal fixtures",
-    "factorial contrast checks",
-    "historical source-fidelity fixture",
-    "framework adapter only when a later experiment requires it"
-  ]
+  "acceptance": {
+    "atol": 1e-11,
+    "rtol": 1e-11,
+    "min_historical_additive_separation": 0.1
+  }
 }
