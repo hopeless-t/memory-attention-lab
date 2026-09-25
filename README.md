@@ -33,7 +33,7 @@ VAL-002 value-source decomposition
     FROZEN REFERENCE — PASS
 
 BENCH-001 residency baseline
-    NEXT
+    DESIGN FROZEN — ACCOUNTING EXECUTOR NEXT
 
 BENCH-002 value reconstruction / MA-Recall
     NOT STARTED
