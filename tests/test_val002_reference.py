@@ -189,7 +189,7 @@ def test_wrong_expected_value_produces_scientific_fail():
     broken = json.loads(json.dumps(spec))
     broken["expected"]["C11"][0][0] += 0.25
 
-    result = run_val002(broken, digest)
+    result = run_val002(broken, parent, digest, parent_digest)
 
     assert result["manifest"]["status"] == "FAIL"
     assert not result["checks"]["known_answer_C11"]["passed"]
