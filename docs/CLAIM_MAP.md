@@ -176,18 +176,36 @@ optimization interactions
 
 **Required controls**
 
-At minimum:
+VAL-002 now freezes a local causal family:
 
 ~~~text
-Standard:
+C00:
     V = X Wv
 
-Value-Embedding control:
-    V = X Wv + E[token]
+C01:
+    V = X Wv + M
 
-Memory Attention:
-    V = X Wk + E[token]
+C10:
+    V = X Wk
+
+C11:
+    V = X Wk + M
+
+M = Norm(E_layer[token])
 ~~~
+
+and keeps the historical Value Embeddings mechanism in a separate
+source-fidelity lane:
+
+~~~text
+V_hist =
+    (1 - lambda) * X Wv
+    +
+    lambda * E_layer[token]
+~~~
+
+VAL-002 validates these control definitions algebraically. It does **not**
+measure the model-quality claim in MA-003.
 
 Training comparisons must also state exactly which budgets are matched.
 
@@ -587,8 +605,41 @@ EXP-001
 **Current status**
 
 ~~~text
-NOT_TESTED
+CONSISTENT
 ~~~
+
+**Evidence**
+
+VAL-002 canonical reference evidence demonstrates, within the frozen numerical
+contract:
+
+~~~text
+historical learned-lambda lane:
+    known-answer error 0
+
+local additive C01:
+    known-answer error 0
+
+historical vs C01 max abs delta:
+    3.5784200537048947
+
+factorial fixed-input interaction max abs:
+    2.220446049250313e-16
+
+parent VAL-001 anchors:
+    C10 / memory / C11 / rotated K error 0
+~~~
+
+Evidence:
+
+~~~text
+evidence/VAL-002/reference/
+source commit 6fa2003032285de3e01d9930b530ac13baa761f2
+~~~
+
+This assessment supports the experimental-control boundary and frozen algebra
+only. It does not establish training-quality effects.
+
 
 ---
 
@@ -696,8 +747,8 @@ NOT_TESTED
 
 | Claim | Type | Primary experiment | Current assessment |
 | --- | --- | --- | --- |
-| MA-001 | source mechanism | VAL-001 | NOT_TESTED |
-| MA-002 | source inference claim | VAL-001 | NOT_TESTED |
+| MA-001 | source mechanism | VAL-001 | CONSISTENT |
+| MA-002 | source inference claim | VAL-001 | CONSISTENT |
 | MA-003 | source quality claim | VAL-002 + EXP-001 | NOT_TESTED |
 | MA-004 | source systems claim | BENCH-001 | NOT_TESTED |
 | MA-005 | source benchmark claim | BENCH-001 | NOT_TESTED |
@@ -707,7 +758,7 @@ NOT_TESTED
 | CTRL-002 | prior-art boundary | BENCH-001 | CONSISTENT |
 | CTRL-003 | systems hypothesis from sources | BENCH-001 | NOT_TESTED |
 | CTRL-004 | prior-art boundary | BENCH-002 | CONSISTENT |
-| CTRL-005 | experimental-control boundary | VAL-002 + EXP-001 | NOT_TESTED |
+| CTRL-005 | experimental-control boundary | VAL-002 + EXP-001 | CONSISTENT |
 | HYP-001 | local hypothesis | BENCH-001 | NOT_TESTED |
 | HYP-002 | local hypothesis | BENCH-002 | NOT_TESTED |
 | HYP-003 | local hypothesis | VAL-002 + EXP-001 | NOT_TESTED |
