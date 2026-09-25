@@ -39,6 +39,7 @@ NESTED_KEYS = {
     "source": {
         "design_commit",
         "memory_attention_paper",
+        "parent_val001_spec_sha256",
         "historical_repository",
         "historical_path",
         "historical_repository_commit",
@@ -121,11 +122,19 @@ def _array(name: str, value: Any, *, ndim: int) -> np.ndarray:
     return array
 
 
-def load_spec(path: Path) -> tuple[dict[str, Any], str]:
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def load_spec(
+    path: Path,
+    parent_val001_path: Path,
+) -> tuple[dict[str, Any], dict[str, Any], str, str]:
     raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
     try:
         spec = json.loads(raw)
+        parent = json.loads(parent_val001_path.read_bytes())
     except json.JSONDecodeError as exc:
         raise SpecError(f"invalid JSON: {exc}") from exc
 
@@ -150,6 +159,14 @@ def load_spec(path: Path) -> tuple[dict[str, Any], str]:
     for key, value in spec["source"].items():
         if not isinstance(value, str) or not value.strip():
             raise SpecError(f"source.{key} must be a non-empty string")
+
+    parent_digest = _sha256(parent_val001_path)
+    if not isinstance(parent, dict) or parent.get("experiment_id") != "VAL-001":
+        raise SpecError("parent spec must be VAL-001")
+    if parent_digest != spec["source"]["parent_val001_spec_sha256"]:
+        raise SpecError(
+            "parent VAL-001 spec SHA-256 does not match the frozen VAL-002 source"
+        )
 
     p = spec["parameters"]
     if type(p["num_kv_heads"]) is not int or p["num_kv_heads"] <= 0:
@@ -202,9 +219,7 @@ def load_spec(path: Path) -> tuple[dict[str, Any], str]:
 
     norm_weight = _array("norm_weight", f["norm_weight"], ndim=1)
     if norm_weight.shape != (p["head_dim"],):
-        raise SpecError(
-            f"norm_weight must have shape ({p['head_dim']},)"
-        )
+        raise SpecError(f"norm_weight must have shape ({p['head_dim']},)")
 
     for key in ("memory_table", "historical_value_table"):
         table = _array(key, f[key], ndim=2)
@@ -236,7 +251,7 @@ def load_spec(path: Path) -> tuple[dict[str, Any], str]:
             f"{rotary_shape}, got {rotated.shape}"
         )
 
-    return spec, digest
+    return spec, parent, digest, parent_digest
 
 
 def _max_abs_error(actual: np.ndarray, expected: np.ndarray) -> float:
@@ -257,7 +272,27 @@ def _close(
     )
 
 
-def run_val002(spec: dict[str, Any], spec_sha256: str) -> dict[str, Any]:
+def _add_close_check(
+    checks: dict[str, dict[str, Any]],
+    metrics: dict[str, float],
+    name: str,
+    actual: np.ndarray,
+    expected: np.ndarray,
+    *,
+    atol: float,
+    rtol: float,
+) -> None:
+    ok, err = _close(actual, expected, atol=atol, rtol=rtol)
+    checks[name] = {"passed": ok, "max_abs_error": err}
+    metrics[f"{name}_max_abs_error"] = err
+
+
+def run_val002(
+    spec: dict[str, Any],
+    parent: dict[str, Any],
+    spec_sha256: str,
+    parent_sha256: str,
+) -> dict[str, Any]:
     p = spec["parameters"]
     f = spec["fixture"]
     e = spec["expected"]
@@ -293,48 +328,59 @@ def run_val002(spec: dict[str, Any], spec_sha256: str) -> dict[str, Any]:
 
     atol = float(a["atol"])
     rtol = float(a["rtol"])
-
     checks: dict[str, dict[str, Any]] = {}
     metrics: dict[str, float] = {}
 
     for key in ("memory", "C00", "C01", "C10", "C11"):
-        expected = np.asarray(e[key], dtype=np.float64)
-        ok, err = _close(cells[key], expected, atol=atol, rtol=rtol)
-        checks[f"known_answer_{key}"] = {"passed": ok, "max_abs_error": err}
-        metrics[f"{key}_max_abs_error"] = err
+        _add_close_check(
+            checks,
+            metrics,
+            f"known_answer_{key}",
+            cells[key],
+            np.asarray(e[key], dtype=np.float64),
+            atol=atol,
+            rtol=rtol,
+        )
 
-    expected_hist = np.asarray(e["HIST-VE"], dtype=np.float64)
-    hist_ok, hist_err = _close(hist, expected_hist, atol=atol, rtol=rtol)
-    checks["known_answer_HIST-VE"] = {
-        "passed": hist_ok,
-        "max_abs_error": hist_err,
-    }
-    metrics["HIST-VE_max_abs_error"] = hist_err
+    _add_close_check(
+        checks,
+        metrics,
+        "known_answer_HIST-VE",
+        hist,
+        np.asarray(e["HIST-VE"], dtype=np.float64),
+        atol=atol,
+        rtol=rtol,
+    )
 
     memory_delta_wv = cells["C01"] - cells["C00"]
     memory_delta_wk = cells["C11"] - cells["C10"]
-    delta_wv_ok, delta_wv_err = _close(
-        memory_delta_wv, cells["memory"], atol=atol, rtol=rtol
+    _add_close_check(
+        checks,
+        metrics,
+        "memory_delta_at_Wv",
+        memory_delta_wv,
+        cells["memory"],
+        atol=atol,
+        rtol=rtol,
     )
-    delta_wk_ok, delta_wk_err = _close(
-        memory_delta_wk, cells["memory"], atol=atol, rtol=rtol
+    _add_close_check(
+        checks,
+        metrics,
+        "memory_delta_at_Wk",
+        memory_delta_wk,
+        cells["memory"],
+        atol=atol,
+        rtol=rtol,
     )
-    shared_memory_ok, shared_memory_err = _close(
-        memory_delta_wv, memory_delta_wk, atol=atol, rtol=rtol
+    _add_close_check(
+        checks,
+        metrics,
+        "shared_memory_delta",
+        memory_delta_wv,
+        memory_delta_wk,
+        atol=atol,
+        rtol=rtol,
     )
-
-    checks["memory_delta_at_Wv"] = {
-        "passed": delta_wv_ok,
-        "max_abs_error": delta_wv_err,
-    }
-    checks["memory_delta_at_Wk"] = {
-        "passed": delta_wk_ok,
-        "max_abs_error": delta_wk_err,
-    }
-    checks["shared_memory_delta"] = {
-        "passed": shared_memory_ok,
-        "max_abs_error": shared_memory_err,
-    }
 
     interaction = memory_delta_wk - memory_delta_wv
     interaction_max = float(np.max(np.abs(interaction)))
@@ -347,15 +393,15 @@ def run_val002(spec: dict[str, Any], spec_sha256: str) -> dict[str, Any]:
     }
     metrics["factorial_interaction_max_abs"] = interaction_max
 
-    source_no_memory = cells["C10"] - cells["C00"]
-    source_with_memory = cells["C11"] - cells["C01"]
-    source_ok, source_err = _close(
-        source_no_memory, source_with_memory, atol=atol, rtol=rtol
+    _add_close_check(
+        checks,
+        metrics,
+        "source_contrast_consistency",
+        cells["C10"] - cells["C00"],
+        cells["C11"] - cells["C01"],
+        atol=atol,
+        rtol=rtol,
     )
-    checks["source_contrast_consistency"] = {
-        "passed": source_ok,
-        "max_abs_error": source_err,
-    }
 
     kv_shape = (
         hidden.shape[0],
@@ -368,35 +414,33 @@ def run_val002(spec: dict[str, Any], spec_sha256: str) -> dict[str, Any]:
         positions,
         base=float(p["rope_base"]),
     )
-    expected_rotated = np.asarray(e["rotated_contextual_wk"], dtype=np.float64)
-    rotated_ok, rotated_err = _close(
-        rotated, expected_rotated, atol=atol, rtol=rtol
+    _add_close_check(
+        checks,
+        metrics,
+        "known_answer_rotated_contextual_wk",
+        rotated,
+        np.asarray(e["rotated_contextual_wk"], dtype=np.float64),
+        atol=atol,
+        rtol=rtol,
     )
-    checks["known_answer_rotated_contextual_wk"] = {
-        "passed": rotated_ok,
-        "max_abs_error": rotated_err,
-    }
-    metrics["rotated_contextual_wk_max_abs_error"] = rotated_err
 
     wrong_post_rope_c11 = rotated.reshape(cells["C11"].shape) + cells["memory"]
     post_rope_delta = float(np.max(np.abs(wrong_post_rope_c11 - cells["C11"])))
-    post_rope_ok = bool(
-        post_rope_delta >= float(a["min_post_rope_guard_delta"])
-    )
     checks["pre_rope_value_guard"] = {
-        "passed": post_rope_ok,
+        "passed": bool(
+            post_rope_delta >= float(a["min_post_rope_guard_delta"])
+        ),
         "wrong_post_rope_value_max_delta": post_rope_delta,
         "minimum_required_delta": float(a["min_post_rope_guard_delta"]),
     }
     metrics["post_rope_guard_delta"] = post_rope_delta
 
     historical_vs_additive = float(np.max(np.abs(hist - cells["C01"])))
-    historical_distinct_ok = bool(
-        historical_vs_additive
-        >= float(a["min_historical_vs_additive_delta"])
-    )
     checks["historical_lane_is_not_clean_additive_control"] = {
-        "passed": historical_distinct_ok,
+        "passed": bool(
+            historical_vs_additive
+            >= float(a["min_historical_vs_additive_delta"])
+        ),
         "max_abs_delta": historical_vs_additive,
         "minimum_required_delta": float(a["min_historical_vs_additive_delta"]),
     }
@@ -405,25 +449,107 @@ def run_val002(spec: dict[str, Any], spec_sha256: str) -> dict[str, Any]:
     hist_zero = historical_value_embedding(
         hidden, wv, historical_table, token_ids, lamb=0.0
     )
-    selected_hist = historical_table[token_ids]
     hist_one = historical_value_embedding(
         hidden, wv, historical_table, token_ids, lamb=1.0
     )
-    hist_zero_ok, hist_zero_err = _close(
-        hist_zero, cells["C00"], atol=atol, rtol=rtol
+    _add_close_check(
+        checks,
+        metrics,
+        "historical_lambda_zero_recovers_Wv",
+        hist_zero,
+        cells["C00"],
+        atol=atol,
+        rtol=rtol,
     )
-    hist_one_ok, hist_one_err = _close(
-        hist_one, selected_hist, atol=atol, rtol=rtol
+    _add_close_check(
+        checks,
+        metrics,
+        "historical_lambda_one_recovers_embedding",
+        hist_one,
+        historical_table[token_ids],
+        atol=atol,
+        rtol=rtol,
     )
-    checks["historical_lambda_zero_recovers_Wv"] = {
-        "passed": hist_zero_ok,
-        "max_abs_error": hist_zero_err,
-    }
-    checks["historical_lambda_one_recovers_embedding"] = {
-        "passed": hist_one_ok,
-        "max_abs_error": hist_one_err,
+
+    # Bind VAL-002 to the already frozen VAL-001 fixture and results.
+    parent_fixture = parent["fixture"]
+    parent_expected = parent["expected"]
+    parent_keys = np.asarray(
+        parent_fixture["content_keys"], dtype=np.float64
+    ).reshape(cells["C10"].shape)
+    parent_memory = np.asarray(
+        parent_expected["normalized_memory"], dtype=np.float64
+    ).reshape(cells["memory"].shape)
+    parent_values = np.asarray(
+        parent_expected["constructed_values"], dtype=np.float64
+    ).reshape(cells["C11"].shape)
+    parent_rotated = np.asarray(
+        parent_expected["rotated_keys"], dtype=np.float64
+    )
+
+    _add_close_check(
+        checks,
+        metrics,
+        "parent_C10_content_key_anchor",
+        cells["C10"],
+        parent_keys,
+        atol=atol,
+        rtol=rtol,
+    )
+    _add_close_check(
+        checks,
+        metrics,
+        "parent_memory_anchor",
+        cells["memory"],
+        parent_memory,
+        atol=atol,
+        rtol=rtol,
+    )
+    _add_close_check(
+        checks,
+        metrics,
+        "parent_C11_value_anchor",
+        cells["C11"],
+        parent_values,
+        atol=atol,
+        rtol=rtol,
+    )
+    _add_close_check(
+        checks,
+        metrics,
+        "parent_rotated_key_anchor",
+        rotated,
+        parent_rotated,
+        atol=atol,
+        rtol=rtol,
+    )
+
+    parent_ids_ok = token_ids.tolist() == parent_fixture["token_ids"]
+    parent_positions_ok = np.array_equal(
+        positions,
+        np.asarray(parent_fixture["positions"], dtype=np.float64),
+    )
+    parent_norm_ok = np.array_equal(
+        norm_weight,
+        np.asarray(parent_fixture["norm_weight"], dtype=np.float64),
+    )
+    parent_table_ok = np.array_equal(
+        memory_table,
+        np.asarray(parent_fixture["memory_table"], dtype=np.float64),
+    )
+    checks["parent_fixture_identity"] = {
+        "passed": parent_ids_ok
+        and parent_positions_ok
+        and parent_norm_ok
+        and parent_table_ok,
+        "token_ids": parent_ids_ok,
+        "positions": parent_positions_ok,
+        "norm_weight": parent_norm_ok,
+        "memory_table": parent_table_ok,
     }
 
+    # Deliberate source perturbations: the two contextual-source lanes must
+    # respond to their own projection only.
     wv_perturbed = wv.copy()
     wv_perturbed[0, 0] += 7.0
     perturbed_cells = factorial_value_cells(
@@ -444,18 +570,18 @@ def run_val002(spec: dict[str, Any], spec_sha256: str) -> dict[str, Any]:
         token_ids,
         lamb=float(p["historical_lambda"]),
     )
-    c10_unchanged = bool(np.allclose(
-        perturbed_cells["C10"], cells["C10"], atol=atol, rtol=rtol
-    ))
-    c11_unchanged = bool(np.allclose(
-        perturbed_cells["C11"], cells["C11"], atol=atol, rtol=rtol
-    ))
-    c00_changed = not bool(np.allclose(
-        perturbed_cells["C00"], cells["C00"], atol=atol, rtol=rtol
-    ))
-    hist_changed = not bool(np.allclose(
-        perturbed_hist, hist, atol=atol, rtol=rtol
-    ))
+    c10_unchanged = bool(
+        np.allclose(perturbed_cells["C10"], cells["C10"], atol=atol, rtol=rtol)
+    )
+    c11_unchanged = bool(
+        np.allclose(perturbed_cells["C11"], cells["C11"], atol=atol, rtol=rtol)
+    )
+    c00_changed = not bool(
+        np.allclose(perturbed_cells["C00"], cells["C00"], atol=atol, rtol=rtol)
+    )
+    hist_changed = not bool(
+        np.allclose(perturbed_hist, hist, atol=atol, rtol=rtol)
+    )
     checks["Wv_perturbation_guard"] = {
         "passed": c10_unchanged and c11_unchanged and c00_changed and hist_changed,
         "C10_unchanged": c10_unchanged,
@@ -477,18 +603,18 @@ def run_val002(spec: dict[str, Any], spec_sha256: str) -> dict[str, Any]:
         head_dim=int(p["head_dim"]),
         eps=float(p["eps"]),
     )
-    c00_unchanged = bool(np.allclose(
-        perturbed_wk_cells["C00"], cells["C00"], atol=atol, rtol=rtol
-    ))
-    c01_unchanged = bool(np.allclose(
-        perturbed_wk_cells["C01"], cells["C01"], atol=atol, rtol=rtol
-    ))
-    c10_changed = not bool(np.allclose(
-        perturbed_wk_cells["C10"], cells["C10"], atol=atol, rtol=rtol
-    ))
-    c11_changed = not bool(np.allclose(
-        perturbed_wk_cells["C11"], cells["C11"], atol=atol, rtol=rtol
-    ))
+    c00_unchanged = bool(
+        np.allclose(perturbed_wk_cells["C00"], cells["C00"], atol=atol, rtol=rtol)
+    )
+    c01_unchanged = bool(
+        np.allclose(perturbed_wk_cells["C01"], cells["C01"], atol=atol, rtol=rtol)
+    )
+    c10_changed = not bool(
+        np.allclose(perturbed_wk_cells["C10"], cells["C10"], atol=atol, rtol=rtol)
+    )
+    c11_changed = not bool(
+        np.allclose(perturbed_wk_cells["C11"], cells["C11"], atol=atol, rtol=rtol)
+    )
     checks["Wk_perturbation_guard"] = {
         "passed": c00_unchanged and c01_unchanged and c10_changed and c11_changed,
         "C00_unchanged": c00_unchanged,
@@ -505,7 +631,12 @@ def run_val002(spec: dict[str, Any], spec_sha256: str) -> dict[str, Any]:
             "experiment_id": "VAL-002",
             "status": status,
             "spec_sha256": spec_sha256,
+            "parent_val001_spec_sha256": parent_sha256,
             "source": spec["source"],
+            "authority": {
+                "historical_lane": "source-fidelity control",
+                "factorial_lane": "local causal control",
+            },
             "provenance": {
                 "python": sys.version.split()[0],
                 "numpy": np.__version__,
@@ -540,6 +671,7 @@ def _terminal_manifest(
     *,
     status: str,
     spec_path: Path,
+    parent_path: Path,
     error: str,
 ) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -548,6 +680,7 @@ def _terminal_manifest(
         "experiment_id": "VAL-002",
         "status": status,
         "spec_path": str(spec_path),
+        "parent_val001_path": str(parent_path),
         "error": error,
         "provenance": {
             "python": sys.version.split()[0],
@@ -564,29 +697,35 @@ def _terminal_manifest(
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("spec", type=Path)
+    parser.add_argument("--parent-val001", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
     try:
-        spec, digest = load_spec(args.spec)
+        spec, parent, digest, parent_digest = load_spec(
+            args.spec,
+            args.parent_val001,
+        )
     except (OSError, SpecError) as exc:
         _terminal_manifest(
             args.out,
             status="INVALID",
             spec_path=args.spec,
+            parent_path=args.parent_val001,
             error=str(exc),
         )
         print(f"VAL-002 INVALID: {exc}")
         return 2
 
     try:
-        result = run_val002(spec, digest)
+        result = run_val002(spec, parent, digest, parent_digest)
         write_evidence(args.out, result)
     except Exception as exc:
         _terminal_manifest(
             args.out,
             status="ERROR",
             spec_path=args.spec,
+            parent_path=args.parent_val001,
             error=f"{type(exc).__name__}: {exc}",
         )
         print(f"VAL-002 ERROR: {type(exc).__name__}: {exc}")
