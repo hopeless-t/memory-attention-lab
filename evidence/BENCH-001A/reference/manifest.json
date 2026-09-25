@@ -1,0 +1,22 @@
+{
+  "authority": {
+    "cuda_required": false,
+    "lane": "deterministic_accounting",
+    "latency_authority": false
+  },
+  "experiment_id": "BENCH-001A",
+  "parent_design_git_blob_sha1": "c1fcab785da2358b61ac7006bc4b015f459bc869",
+  "provenance": {
+    "git_commit": "bba45d936ba8f04e02e8e63dae106e6641ed1585",
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": "3.12.14"
+  },
+  "schema_version": 1,
+  "source": {
+    "upstream_benchmark_blob": "9ce6143fe7df1422b2f617996395d238edd2cc1e",
+    "upstream_commit": "8176f1feaff6724af670e70d75cd9767f8e38223",
+    "upstream_repository": "Joluck/memory-attention"
+  },
+  "spec_sha256": "088be700dbce22acbcf49976acb4cad5a4e40657aef7b9a6c14f9214016b7773",
+  "status": "PASS"
+}
