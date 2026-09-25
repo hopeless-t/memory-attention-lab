@@ -232,53 +232,48 @@ Kang, *Memory Attention*, arXiv:2609.28399.
 
 **Source claim**
 
-Token-indexed memory can be stored outside GPU memory and prefetched because the memory address is determined by token identity and layer position.
+Token-indexed memory can be stored outside GPU memory because the lookup address
+is determined by token identity and layer position.
 
 **Local interpretation**
 
-There are two separate claims:
+MA-004 is deliberately narrowed to **parameter placement / accelerator
+residency**.
+
+It asks:
 
 ~~~text
-A. accelerator-resident parameter bytes can be reduced
-B. latency overhead can be sufficiently hidden or tolerated
+Can the MA table reside in host memory while the dedicated Wv projection is
+absent from accelerator-resident parameters?
 ~~~
 
-A can be true while B is false.
-
-BENCH-001 therefore uses two evidence lanes:
+This is an accounting / placement claim and belongs to:
 
 ~~~text
 BENCH-001A
-    deterministic residency / staging accounting
-
-BENCH-001B
-    source-faithful CUDA performance measurement
 ~~~
 
-A PASS in BENCH-001A does not establish the BENCH-001B latency claim.
+Runtime overlap, transfer hiding, and whether offload latency is acceptable are
+**not** part of MA-004's assessment. Those belong to MA-005 / BENCH-001B.
 
-**Potential confounds**
+A BENCH-001A PASS may therefore move MA-004 without implying any latency result.
+
+**Relevant accounting variables**
 
 ~~~text
-PCIe / interconnect bandwidth
-host memory bandwidth
-pinned memory
-prefetch depth
-batch size
-sequence length
-unique-token rate
-memory width
-dtype
-allocator behavior
-device generation
-synchronization protocol
+Wv parameter bytes removed from accelerator residency
+MA table bytes placed in host residency
+temporary pinned-host / GPU staging bytes
+persistent KV-cache bytes reported separately
 ~~~
 
-**Tests**
+Temporary staging and KV cache are not model parameters and must not be merged
+into the parameter-residency claim.
+
+**Test**
 
 ~~~text
 BENCH-001A
-BENCH-001B
 ~~~
 
 **Current status**
