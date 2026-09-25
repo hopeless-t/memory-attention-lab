@@ -15,10 +15,11 @@ from memory_attention_lab.experiments.val002 import SpecError, load_spec, run_va
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC_PATH = ROOT / "specs" / "VAL-002.reference.json"
+PARENT_SPEC_PATH = ROOT / "specs" / "VAL-001.json"
 
 
 def _loaded():
-    return load_spec(SPEC_PATH)
+    return load_spec(SPEC_PATH, PARENT_SPEC_PATH)
 
 
 def _arrays(spec):
@@ -41,15 +42,15 @@ def _arrays(spec):
 
 
 def test_frozen_reference_passes_all_checks():
-    spec, digest = _loaded()
-    result = run_val002(spec, digest)
+    spec, parent, digest, parent_digest = _loaded()
+    result = run_val002(spec, parent, digest, parent_digest)
 
     assert result["manifest"]["status"] == "PASS"
     assert all(check["passed"] for check in result["checks"].values())
 
 
 def test_factorial_memory_delta_is_identical_for_both_sources():
-    spec, _ = _loaded()
+    spec, parent, digest, parent_digest = _loaded()
     a = _arrays(spec)
     cells = factorial_value_cells(
         a["hidden"],
@@ -74,7 +75,7 @@ def test_factorial_memory_delta_is_identical_for_both_sources():
 
 
 def test_historical_lambda_endpoints_are_explicit():
-    spec, _ = _loaded()
+    spec, parent, digest, parent_digest = _loaded()
     a = _arrays(spec)
     cells = factorial_value_cells(
         a["hidden"],
@@ -108,8 +109,8 @@ def test_historical_lambda_endpoints_are_explicit():
 
 
 def test_historical_lane_is_not_the_clean_additive_control():
-    spec, digest = _loaded()
-    result = run_val002(spec, digest)
+    spec, parent, digest, parent_digest = _loaded()
+    result = run_val002(spec, parent, digest, parent_digest)
 
     check = result["checks"]["historical_lane_is_not_clean_additive_control"]
     assert check["passed"]
@@ -119,8 +120,8 @@ def test_historical_lane_is_not_the_clean_additive_control():
 
 
 def test_wv_perturbation_cannot_leak_into_key_reuse_cells():
-    spec, digest = _loaded()
-    result = run_val002(spec, digest)
+    spec, parent, digest, parent_digest = _loaded()
+    result = run_val002(spec, parent, digest, parent_digest)
     guard = result["checks"]["Wv_perturbation_guard"]
 
     assert guard["passed"]
@@ -131,8 +132,8 @@ def test_wv_perturbation_cannot_leak_into_key_reuse_cells():
 
 
 def test_wk_perturbation_cannot_leak_into_wv_cells():
-    spec, digest = _loaded()
-    result = run_val002(spec, digest)
+    spec, parent, digest, parent_digest = _loaded()
+    result = run_val002(spec, parent, digest, parent_digest)
     guard = result["checks"]["Wk_perturbation_guard"]
 
     assert guard["passed"]
@@ -143,8 +144,8 @@ def test_wk_perturbation_cannot_leak_into_wv_cells():
 
 
 def test_post_rope_wrong_path_is_detected():
-    spec, digest = _loaded()
-    result = run_val002(spec, digest)
+    spec, parent, digest, parent_digest = _loaded()
+    result = run_val002(spec, parent, digest, parent_digest)
     guard = result["checks"]["pre_rope_value_guard"]
 
     assert guard["passed"]
@@ -160,7 +161,7 @@ def test_unknown_field_is_invalid(tmp_path: Path):
     bad.write_text(json.dumps(raw))
 
     with pytest.raises(SpecError, match="extra"):
-        load_spec(bad)
+        load_spec(bad, PARENT_SPEC_PATH)
 
 
 def test_bad_projection_shape_is_invalid(tmp_path: Path):
@@ -170,7 +171,7 @@ def test_bad_projection_shape_is_invalid(tmp_path: Path):
     bad.write_text(json.dumps(raw))
 
     with pytest.raises(SpecError, match="wv"):
-        load_spec(bad)
+        load_spec(bad, PARENT_SPEC_PATH)
 
 
 def test_numeric_strings_do_not_silently_coerce(tmp_path: Path):
@@ -180,11 +181,11 @@ def test_numeric_strings_do_not_silently_coerce(tmp_path: Path):
     bad.write_text(json.dumps(raw))
 
     with pytest.raises(SpecError, match="JSON number"):
-        load_spec(bad)
+        load_spec(bad, PARENT_SPEC_PATH)
 
 
 def test_wrong_expected_value_produces_scientific_fail():
-    spec, digest = _loaded()
+    spec, parent, digest, parent_digest = _loaded()
     broken = json.loads(json.dumps(spec))
     broken["expected"]["C11"][0][0] += 0.25
 
