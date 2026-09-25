@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - research/bench001b-protocol
+      - research/bench001b-capture-kit
     paths:
       - "specs/BENCH-001B.protocol.json"
       - "src/memory_attention_lab/experiments/bench001b_validate.py"
