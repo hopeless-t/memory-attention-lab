@@ -10,10 +10,12 @@ on:
       - "pyproject.toml"
       - "specs/VAL-001.json"
       - "specs/VAL-002.json"
+      - "specs/VAL-002.reference.json"
       - "src/memory_attention_lab/attention/value_sources.py"
       - "src/memory_attention_lab/attention/__init__.py"
       - "src/memory_attention_lab/experiments/val002.py"
       - "tests/test_val002.py"
+      - "tests/test_val002_reference.py"
       - "docs/VAL-002.md"
       - "README.md"
       - ".github/workflows/val002.yml"
@@ -22,10 +24,12 @@ on:
       - "pyproject.toml"
       - "specs/VAL-001.json"
       - "specs/VAL-002.json"
+      - "specs/VAL-002.reference.json"
       - "src/memory_attention_lab/attention/value_sources.py"
       - "src/memory_attention_lab/attention/__init__.py"
       - "src/memory_attention_lab/experiments/val002.py"
       - "tests/test_val002.py"
+      - "tests/test_val002_reference.py"
       - "docs/VAL-002.md"
       - "README.md"
       - ".github/workflows/val002.yml"
@@ -85,7 +89,7 @@ jobs:
       - name: Execute VAL-002
         run: |
           python -m memory_attention_lab.experiments.val002 \
-            specs/VAL-002.json \
+            specs/VAL-002.reference.json \
             --parent-val001 specs/VAL-001.json \
             --out runs/VAL-002/reference
 
