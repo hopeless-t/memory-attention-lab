@@ -223,13 +223,24 @@ so Google Cloud is not automatically the cost-first choice.
 
 ## G4 regional note
 
-Current Google GPU location documentation lists G4 in multiple APAC regions
-including Singapore and Taiwan.
+Current Google GPU location documentation lists G4 in Tokyo zone:
 
-Tokyo currently lists A2/A3/G2/T4 classes but not G4.
+~~~text
+asia-northeast1-b
+~~~
 
-Thus Google Cloud also strengthens the case for A2 when low-latency / Japan
-proximity matters.
+A2 Standard is currently listed in Tokyo zones:
+
+~~~text
+asia-northeast1-a
+asia-northeast1-c
+~~~
+
+Therefore regional proximity no longer distinguishes G4 from A2 in Tokyo.
+
+G4 remains outside the current canonical BENCH-001B lane because of the frozen
+FlashAttention-2 / Blackwell software-compatibility boundary, not because of
+Tokyo availability.
 
 ## Candidate policy
 
