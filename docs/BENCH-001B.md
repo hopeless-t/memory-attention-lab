@@ -494,3 +494,79 @@ capture kit runs probe-only
 Human reviews probe.json
 only then may --execute be used
 ~~~
+
+
+## Google Cloud reevaluation checkpoint
+
+DS-008 reevaluates the proposed Google Cloud / RTX PRO 6000 path.
+
+The product boundary is:
+
+~~~text
+Cloud Build
+    control-plane candidate only
+    not the GPU execution worker
+
+Compute Engine G4
+    RTX PRO 6000 Blackwell 96 GB
+    exploratory Blackwell lane
+    not canonical under the frozen FA2 protocol
+
+Compute Engine A2
+    A100 40 GB
+    canonical Google candidate
+
+Compute Engine A2 Ultra
+    A100 80 GB
+    canonical Google headroom/provenance candidate
+~~~
+
+The reason G4 is not promoted into the current B1 lane is software fidelity,
+not hardware capability:
+
+~~~text
+RTX PRO 6000 Blackwell:
+    compute capability 12.0
+    BF16-capable hardware
+
+current official FlashAttention-2 CUDA support:
+    Ampere
+    Ada
+    Hopper
+~~~
+
+Changing the benchmark to FA4 or a patched/source-built SM120 path requires a
+separate protocol and must not silently inherit BENCH-001B authority.
+
+Fresh decision-support validation:
+
+~~~text
+run:
+36084289427
+
+Google Cloud reevaluation:
+    1.8 million states PASS
+
+balanced:
+    Runpod Secure A40 48 GB 51.54%
+
+budget-heavy:
+    Runpod Secure A40 48 GB 95.24%
+
+provenance-heavy:
+    GCP A2 Ultra A100 80 GB 47.74%
+
+Japan-proximity-heavy:
+    GCP A2 A100 40 GB 58.12%
+
+headroom-heavy:
+    GCP A2 Ultra A100 80 GB 51.30%
+
+cloud-credit-heavy:
+    GCP A2 Ultra A100 80 GB 58.13%
+~~~
+
+These are engineering decision-support frequencies, not benchmark-success
+probabilities.
+
+No Google Cloud resource creation is authorized by this checkpoint.

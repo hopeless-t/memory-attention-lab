@@ -8,6 +8,7 @@ on:
       - research/bench001b-protocol
       - research/bench001b-capture-kit
       - research/bench001b-gpu-scout
+      - research/bench001b-gcp-reeval
     paths:
       - "specs/BENCH-001B.protocol.json"
       - "src/memory_attention_lab/experiments/bench001b_validate.py"
@@ -17,6 +18,8 @@ on:
       - "research/decisions/DS-006-bench001b-execution.md"
       - "research/bench001b_gpu_candidate_mc.py"
       - "research/decisions/DS-007-bench001b-gpu-candidates.md"
+      - "research/bench001b_gcp_reeval_mc.py"
+      - "research/decisions/DS-008-bench001b-gcp-reeval.md"
       - "docs/BENCH-001B.md"
       - "docs/BENCH-001B-RUNBOOK.md"
       - "src/memory_attention_lab/experiments/bench001b_capture.py"
@@ -32,6 +35,8 @@ on:
       - "research/decisions/DS-006-bench001b-execution.md"
       - "research/bench001b_gpu_candidate_mc.py"
       - "research/decisions/DS-007-bench001b-gpu-candidates.md"
+      - "research/bench001b_gcp_reeval_mc.py"
+      - "research/decisions/DS-008-bench001b-gcp-reeval.md"
       - "docs/BENCH-001B.md"
       - "docs/BENCH-001B-RUNBOOK.md"
       - "src/memory_attention_lab/experiments/bench001b_capture.py"
@@ -97,6 +102,39 @@ jobs:
         with:
           name: bench001b-gpu-candidate-decision-support
           path: runs/decision-support/bench001b-gpu-candidates/
+          if-no-files-found: error
+          retention-days: 7
+
+  gcp-reeval:
+    name: Google Cloud reevaluation / 1.8M states
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install NumPy
+        run: python -m pip install "numpy>=2.0,<3"
+      - name: Run Google Cloud reevaluation
+        run: |
+          python research/bench001b_gcp_reeval_mc.py \
+            --samples 300000 \
+            --seed 20260925
+      - name: Publish decision support
+        if: always()
+        run: |
+          if [ -f runs/decision-support/bench001b-gcp-reeval/result.md ]; then
+            cat runs/decision-support/bench001b-gcp-reeval/result.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload decision-support artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bench001b-gcp-reeval-decision-support
+          path: runs/decision-support/bench001b-gcp-reeval/
           if-no-files-found: error
           retention-days: 7
 
