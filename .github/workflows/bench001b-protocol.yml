@@ -1,0 +1,89 @@
+name: BENCH-001B Protocol
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - research/bench001b-protocol
+    paths:
+      - "specs/BENCH-001B.protocol.json"
+      - "src/memory_attention_lab/experiments/bench001b_validate.py"
+      - "tests/test_bench001b_protocol.py"
+      - "tests/fixtures/BENCH-001B/**"
+      - "research/bench001b_execution_mc.py"
+      - "research/decisions/DS-006-bench001b-execution.md"
+      - "docs/BENCH-001B.md"
+      - ".github/workflows/bench001b-protocol.yml"
+  pull_request:
+    paths:
+      - "specs/BENCH-001B.protocol.json"
+      - "src/memory_attention_lab/experiments/bench001b_validate.py"
+      - "tests/test_bench001b_protocol.py"
+      - "tests/fixtures/BENCH-001B/**"
+      - "research/bench001b_execution_mc.py"
+      - "research/decisions/DS-006-bench001b-execution.md"
+      - "docs/BENCH-001B.md"
+      - ".github/workflows/bench001b-protocol.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: protocol test / ${{ matrix.os }} / py${{ matrix.python }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - macos-15
+        python:
+          - "3.12"
+          - "3.13"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Full test suite
+        run: pytest
+
+  execution-topology:
+    name: execution topology / 1.5M states
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install NumPy
+        run: python -m pip install "numpy>=2.0,<3"
+      - name: Run execution-topology stress test
+        run: |
+          python research/bench001b_execution_mc.py \
+            --samples 300000 \
+            --seed 20260925
+      - name: Publish decision support
+        if: always()
+        run: |
+          if [ -f runs/decision-support/bench001b-execution/result.md ]; then
+            cat runs/decision-support/bench001b-execution/result.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload decision-support artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bench001b-execution-decision-support
+          path: runs/decision-support/bench001b-execution/
+          if-no-files-found: error
+          retention-days: 7
