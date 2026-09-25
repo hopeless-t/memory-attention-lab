@@ -439,3 +439,58 @@ Real benchmark timing requires explicit `--execute` after the execution
 resource has been approved.
 
 This checkpoint does not move MA-005.
+
+
+## B1 GPU candidate checkpoint
+
+DS-007 records the current pre-approval GPU candidate priority.
+
+~~~text
+default first probe candidate:
+    Runpod Secure A40 48 GB
+
+OOM/headroom or source-similarity fallback:
+    Runpod Secure A100 80 GB
+
+minimum-spend alternative:
+    Runpod Secure RTX A5000 24 GB
+    only if Human accepts higher headroom risk
+~~~
+
+Fresh public Actions decision-support run:
+
+~~~text
+run:
+36082545945
+
+balanced:
+    A40 48 GB 67.82%
+
+OOM-risk-heavy:
+    A100 80 GB 52.57%
+
+budget-heavy:
+    A40 48 GB 67.76%
+
+reproducibility-heavy:
+    A40 48 GB 53.88%
+
+source-similarity-heavy:
+    A100 80 GB 54.21%
+~~~
+
+These are engineering decision-support frequencies, not probabilities that a
+GPU will complete the benchmark.
+
+No provider account, instance, GPU, billing event, or execution is authorized
+by this checkpoint.
+
+The next state transition remains:
+
+~~~text
+Human selects a concrete resource and current price
+Human explicitly approves any spend
+capture kit runs probe-only
+Human reviews probe.json
+only then may --execute be used
+~~~
