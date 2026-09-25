@@ -1,6 +1,6 @@
 # BENCH-001B — CUDA Performance Evidence Protocol
 
-> **Status:** B0 PROTOCOL CANDIDATE — VALIDATION PENDING  
+> **Status:** B0 PROTOCOL VALIDATED — PASS · B1 NOT EXECUTED  
 > **Scientific authority:** protocol validation only  
 > **Performance authority:** NONE until real CUDA evidence is reviewed  
 > **Paid-resource authority:** NONE
@@ -339,7 +339,7 @@ BENCH-001A
     FROZEN REFERENCE — PASS
 
 BENCH-001B B0
-    PROTOCOL CANDIDATE — VALIDATION PENDING
+    PROTOCOL VALIDATED — PASS
 
 BENCH-001B B1
     NOT EXECUTED
@@ -373,3 +373,45 @@ A B0 PASS does not establish:
 - CPU-gather cost;
 - MA-Recall benefit;
 - Memory Attention superiority.
+
+
+## B0 validation result
+
+Fresh public Actions run:
+
+~~~text
+run:
+36079694609
+
+source commit:
+e75eb00d147ea9a5aa5f49d959a09b0f6a967dff
+~~~
+
+Validated on:
+
+~~~text
+Ubuntu 24.04 / Python 3.12
+Ubuntu 24.04 / Python 3.13
+macOS 15 / Python 3.12
+macOS 15 / Python 3.13
+
+full pytest:
+PASS
+~~~
+
+DS-006 execution-topology decision support also passed with 300,000 samples per
+scenario:
+
+| Scenario | Selected topology C |
+| --- | ---: |
+| balanced | 99.30% |
+| source fidelity heavy | 99.05% |
+| public-repo security heavy | 97.57% |
+| paid-resource control heavy | 84.59% |
+| automation heavy | 79.95% |
+
+These percentages are engineering decision-support frequencies, not scientific
+probabilities.
+
+The next state transition requires an identified qualifying GPU execution
+resource. No such resource is authorized by B0.
