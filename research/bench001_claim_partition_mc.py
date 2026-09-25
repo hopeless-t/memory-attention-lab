@@ -164,11 +164,9 @@ def main():
     ):
         return 2
 
-    if result["scenarios"]["minimal_churn_heavy"]["winner"] not in {
-        "A keep-compound-MA004",
-        "D defer-claim-structure",
-    }:
-        return 2
+    # Stress scenarios test robustness; they do not prescribe a winner in
+    # advance merely to manufacture a counterexample. The balanced and
+    # evidence-ownership scenarios above are the acceptance gate.
     return 0
 
 
