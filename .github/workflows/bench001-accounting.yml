@@ -1,0 +1,157 @@
+name: BENCH-001A Accounting
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - research/bench001-accounting
+    paths:
+      - "pyproject.toml"
+      - "specs/BENCH-001.json"
+      - "specs/BENCH-001A.reference.json"
+      - "src/memory_attention_lab/measurement/**"
+      - "src/memory_attention_lab/experiments/bench001a.py"
+      - "tests/test_bench001a_accounting.py"
+      - "research/bench001a_accounting_fuzz.py"
+      - "research/bench001_claim_partition_mc.py"
+      - "research/decisions/DS-005-bench001-claim-partition.md"
+      - "docs/BENCH-001.md"
+      - "docs/CLAIM_MAP.md"
+      - ".github/workflows/bench001-accounting.yml"
+  pull_request:
+    paths:
+      - "pyproject.toml"
+      - "specs/BENCH-001.json"
+      - "specs/BENCH-001A.reference.json"
+      - "src/memory_attention_lab/measurement/**"
+      - "src/memory_attention_lab/experiments/bench001a.py"
+      - "tests/test_bench001a_accounting.py"
+      - "research/bench001a_accounting_fuzz.py"
+      - "research/bench001_claim_partition_mc.py"
+      - "research/decisions/DS-005-bench001-claim-partition.md"
+      - "docs/BENCH-001.md"
+      - "docs/CLAIM_MAP.md"
+      - ".github/workflows/bench001-accounting.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test / ${{ matrix.os }} / py${{ matrix.python }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - macos-15
+        python:
+          - "3.12"
+          - "3.13"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Full test suite
+        run: pytest
+
+  fuzz:
+    name: randomized accounting / 500k cases
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Run randomized accounting sweep
+        run: |
+          python research/bench001a_accounting_fuzz.py \
+            --cases 500000 \
+            --seed 20260925
+      - name: Upload sweep summary
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bench001a-accounting-fuzz
+          path: runs/BENCH-001A/fuzz/
+          if-no-files-found: error
+          retention-days: 7
+
+  claim-partition:
+    name: claim partition / 1.5M states
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install NumPy
+        run: python -m pip install "numpy>=2.0,<3"
+      - name: Run claim-partition stress test
+        run: |
+          python research/bench001_claim_partition_mc.py \
+            --samples 300000 \
+            --seed 20260925
+
+  evidence:
+    name: reference evidence / ubuntu-24.04 / py3.12
+    needs:
+      - test
+      - fuzz
+      - claim-partition
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Execute BENCH-001A
+        run: |
+          python -m memory_attention_lab.experiments.bench001a \
+            specs/BENCH-001A.reference.json \
+            --parent-design specs/BENCH-001.json \
+            --out runs/BENCH-001A/reference
+      - name: Publish evidence summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## BENCH-001A manifest"
+            echo '```json'
+            cat runs/BENCH-001A/reference/manifest.json
+            echo '```'
+            echo
+            echo "## BENCH-001A metrics"
+            echo '```json'
+            cat runs/BENCH-001A/reference/metrics.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload structured evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bench001a-reference-evidence
+          path: runs/BENCH-001A/reference/
+          if-no-files-found: error
+          retention-days: 7

@@ -1,6 +1,6 @@
 # BENCH-001 — Residency Baseline
 
-> **Status:** DESIGN FROZEN  
+> **Status:** ACCOUNTING EXECUTOR VALIDATED — CANONICAL PUBLICATION PENDING  
 > **Scientific authority:** benchmark design only  
 > **Performance authority:** NONE until a valid CUDA measurement exists  
 > **Training authority:** NONE
@@ -72,10 +72,13 @@ L    number of layers
 V    vocabulary size
 B    batch size
 S    current input sequence length
-G    offload group size
+G    requested offload group size
+Ge   effective group size = min(G, L)
 P    prefetch depth
-Z    ceil(L/G)
-b    bytes per memory-table element
+Z    ceil(L/Ge)
+bw   bytes per ordinary model-weight element
+bm   bytes per MA memory/staging element
+bkv  bytes per KV-cache element
 ~~~
 
 ### Value-side parameter delta
@@ -118,6 +121,27 @@ ma_gpu GPU params - standard GPU params =
     V*L*K - L*Wv_params_per_layer
 ~~~
 
+Byte deltas must use the actual element width of each allocation rather than
+assuming that ordinary model weights, the MA table, and KV cache always share
+one dtype:
+
+~~~text
+standard Wv bytes =
+    L * Wv_params_per_layer * bw
+
+MA table bytes =
+    V * L * K * bm
+
+ma_offload GPU parameter-byte delta vs standard =
+    -standard Wv bytes
+
+ma_offload CPU parameter-byte delta vs standard =
+    +MA table bytes
+
+ma_gpu GPU parameter-byte delta vs standard =
+    MA table bytes - standard Wv bytes
+~~~
+
 These are parameter **deltas**, not complete model totals.
 
 All common model parameters cancel from the delta.
@@ -127,24 +151,31 @@ All common model parameters cancel from the delta.
 The pinned pipeline offloader preallocates bounded pinned-host and GPU slots.
 
 ~~~text
+effective_group =
+    min(G, L)
+
 pipeline_slots =
-    min(P, ceil(L/G))
+    min(P, ceil(L/effective_group))
 
 pipeline pinned CPU bytes =
-    pipeline_slots * B*S*G*K*b
+    pipeline_slots * B*S*effective_group*K*bm
 
 pipeline GPU staging bytes =
-    pipeline_slots * B*S*G*K*b
+    pipeline_slots * B*S*effective_group*K*bm
 ~~~
+
+The exact upstream pipeline clamps a requested group larger than the layer
+count to the number of layers before allocating slots. BENCH-001A mirrors that
+source behavior rather than extrapolating the requested G literally.
 
 The default decode path uses a bulk gather/H2D buffer:
 
 ~~~text
 bulk pinned CPU bytes =
-    B*S*L*K*b
+    B*S*L*K*bm
 
 bulk GPU staging bytes =
-    B*S*L*K*b
+    B*S*L*K*bm
 ~~~
 
 These buffers are **not model parameters**.
@@ -400,12 +431,88 @@ The selected design is dual-lane.
 The scope/cost stress case deliberately prefers accounting-only, preventing the
 dual-lane decision from being treated as a theorem.
 
+## BENCH-001A executable reference
+
+The deterministic accounting executor is implemented at:
+
+~~~text
+src/memory_attention_lab/measurement/residency.py
+src/memory_attention_lab/experiments/bench001a.py
+specs/BENCH-001A.reference.json
+~~~
+
+The reference fixture contains four explicit cases:
+
+~~~text
+small known answer
+source-default prefill anchor
+group-size > layers clamp guard
+GQA + bias + mixed element-width guard
+~~~
+
+The latest validated branch run also executes:
+
+~~~text
+full pytest:
+    Ubuntu 24.04 / Python 3.12
+    Ubuntu 24.04 / Python 3.13
+    macOS 15 / Python 3.12
+    macOS 15 / Python 3.13
+
+randomized accounting:
+    500,000 cases
+
+claim-partition decision support:
+    1.5 million simulated engineering decision states
+~~~
+
+All passed on the validated candidate.
+
+### Source-default accounting anchor
+
+For the pinned upstream default dimensions with BF16-sized model/memory/cache
+elements and prefill length/cache capacity 2048:
+
+~~~text
+Standard Wv parameter bytes:
+    201,326,592
+    192 MiB
+
+MA table bytes:
+    3,145,728,000
+    approximately 2.93 GiB
+
+MA-Offload GPU parameter-byte delta vs Standard:
+    -201,326,592
+    -192 MiB
+
+pipeline GPU staging bytes:
+    268,435,456
+    256 MiB
+
+bulk GPU staging bytes:
+    1,610,612,736
+    1.5 GiB
+
+logical H2D payload per full forward:
+    1,610,612,736
+    1.5 GiB
+
+KV-cache bytes at capacity 2048:
+    3,221,225,472
+    3.0 GiB
+~~~
+
+These are exact deterministic accounting outputs under the frozen configuration.
+
+They are **not** measured CUDA latency, peak allocator usage, or proof that the
+transfer can be hidden.
+
 ## Next implementation step
 
-Implement **BENCH-001A first** as a strict, framework-independent accounting
-oracle.
+Publish the reviewed BENCH-001A evidence from a merged-main run.
 
-Only after that accounting contract is trusted should the CUDA adapter be
+Only after BENCH-001A is canonical should BENCH-001B CUDA measurement be
 implemented or borrowed.
 
 ## Non-claims

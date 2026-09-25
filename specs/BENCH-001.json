@@ -34,29 +34,39 @@
       "V": "vocab_size",
       "B": "batch_size",
       "S": "current input sequence length",
-      "G": "offload group_size",
+      "G": "requested offload group_size",
       "P": "prefetch_depth",
-      "Z": "ceil(L / G)",
-      "b": "memory table element bytes"
+      "Z": "ceil(L / Ge)",
+      "Ge": "effective group size = min(G, L)",
+      "bw": "bytes per ordinary model-weight element",
+      "bm": "bytes per MA memory/staging element",
+      "bkv": "bytes per KV-cache element"
     },
     "parameter_deltas": {
       "standard_value_projection_per_layer": "H*K + (K if qkv_bias else 0)",
       "ma_table_elements": "V*L*K",
       "ma_offload_gpu_parameter_delta_vs_standard": "-L*standard_value_projection_per_layer",
       "ma_offload_cpu_parameter_delta_vs_standard": "+V*L*K",
-      "ma_gpu_gpu_parameter_delta_vs_standard": "V*L*K - L*standard_value_projection_per_layer"
+      "ma_gpu_gpu_parameter_delta_vs_standard": "V*L*K - L*standard_value_projection_per_layer",
+      "standard_value_projection_bytes": "L*standard_value_projection_per_layer*bw",
+      "ma_table_bytes": "V*L*K*bm",
+      "ma_offload_gpu_parameter_byte_delta_vs_standard": "-standard_value_projection_bytes",
+      "ma_offload_cpu_parameter_byte_delta_vs_standard": "+ma_table_bytes",
+      "ma_gpu_gpu_parameter_byte_delta_vs_standard": "ma_table_bytes-standard_value_projection_bytes"
     },
     "staging_working_set": {
-      "pipeline_slots": "min(P, Z)",
-      "pipeline_gpu_bytes": "pipeline_slots * B*S*G*K*b",
-      "pipeline_pinned_cpu_bytes": "pipeline_slots * B*S*G*K*b",
-      "bulk_gpu_bytes": "B*S*L*K*b",
-      "bulk_pinned_cpu_bytes": "B*S*L*K*b"
+      "pipeline_slots": "min(P, ceil(L/effective_group))",
+      "pipeline_gpu_bytes": "pipeline_slots * B*S*effective_group*K*bm",
+      "pipeline_pinned_cpu_bytes": "pipeline_slots * B*S*effective_group*K*bm",
+      "bulk_gpu_bytes": "B*S*L*K*bm",
+      "bulk_pinned_cpu_bytes": "B*S*L*K*bm",
+      "effective_group": "min(G, L)"
     },
     "persistent_kv_cache": {
       "relation": "same representation in Standard and current MA benchmark",
       "elements": "2*L*B*capacity*K",
-      "note": "Report separately; it is not a parameter and BENCH-001 does not claim MA-Recall savings."
+      "note": "Report separately; it is not a parameter and BENCH-001 does not claim MA-Recall savings.",
+      "bytes": "2*L*B*capacity*K*bkv"
     },
     "exclusions_from_parameter_counts": [
       "KV cache",
@@ -64,6 +74,10 @@
       "transfer/staging buffers",
       "deterministic RoPE buffers",
       "CPU staging copies used only to initialize GPU weights"
+    ],
+    "source_fidelity_notes": [
+      "Requested group_size is clamped to min(group_size, num_layers) before pipeline slot allocation.",
+      "Weight, MA-memory/staging, and KV-cache element widths are explicit accounting inputs and must not be silently conflated."
     ]
   },
   "cuda_protocol": {

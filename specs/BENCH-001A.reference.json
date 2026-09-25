@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "experiment_id": "BENCH-001A",
+  "description": "Deterministic source-scope residency, staging, transfer-payload, and KV-cache accounting for BENCH-001.",
+  "parent_design": {
+    "path": "specs/BENCH-001.json",
+    "git_blob_sha1": "c1fcab785da2358b61ac7006bc4b015f459bc869"
+  },
+  "source": {
+    "upstream_repository": "Joluck/memory-attention",
+    "upstream_commit": "8176f1feaff6724af670e70d75cd9767f8e38223",
+    "upstream_benchmark_blob": "9ce6143fe7df1422b2f617996395d238edd2cc1e"
+  },
+  "authority": {
+    "lane": "deterministic_accounting",
+    "cuda_required": false,
+    "latency_authority": false
+  },
+  "cases": [
+    {
+      "id": "small_known_answer",
+      "config": {
+        "hidden_size": 16,
+        "num_heads": 4,
+        "num_kv_heads": 4,
+        "num_layers": 6,
+        "vocab_size": 100,
+        "batch_size": 2,
+        "seq_len": 3,
+        "group_size": 2,
+        "prefetch_depth": 2,
+        "qkv_bias": false,
+        "weight_element_bytes": 2,
+        "memory_element_bytes": 2,
+        "kv_cache_element_bytes": 2,
+        "kv_cache_capacity": 8
+      },
+      "expected": {
+        "derived": {"head_dim": 4, "kv_width": 16, "effective_group": 2, "num_groups": 3, "pipeline_slots": 2},
+        "parameters": {"standard_wv_params_per_layer": 256, "standard_wv_params_total": 1536, "ma_table_elements": 9600},
+        "placement": {
+          "standard_value_side": {"gpu_parameters": 1536, "cpu_parameters": 0, "gpu_parameter_bytes": 3072, "cpu_parameter_bytes": 0},
+          "ma_gpu_value_side": {"gpu_parameters": 9600, "cpu_parameters": 0, "gpu_parameter_bytes": 19200, "cpu_parameter_bytes": 0},
+          "ma_offload_value_side": {"gpu_parameters": 0, "cpu_parameters": 9600, "gpu_parameter_bytes": 0, "cpu_parameter_bytes": 19200},
+          "deltas_vs_standard": {"ma_offload_gpu_parameters": -1536, "ma_offload_cpu_parameters": 9600, "ma_gpu_gpu_parameters": 8064, "ma_offload_gpu_parameter_bytes": -3072, "ma_offload_cpu_parameter_bytes": 19200, "ma_gpu_gpu_parameter_bytes": 16128}
+        },
+        "staging": {
+          "pipeline": {"allocated_elements": 384, "pinned_cpu_bytes": 768, "gpu_bytes": 768},
+          "bulk": {"allocated_elements": 576, "pinned_cpu_bytes": 1152, "gpu_bytes": 1152}
+        },
+        "transfer": {"h2d_payload_elements_per_forward": 576, "h2d_payload_bytes_per_forward": 1152},
+        "kv_cache": {"elements": 3072, "bytes": 6144}
+      }
+    },
+    {
+      "id": "source_defaults_prefill",
+      "config": {
+        "hidden_size": 2048,
+        "num_heads": 32,
+        "num_kv_heads": 32,
+        "num_layers": 24,
+        "vocab_size": 32000,
+        "batch_size": 8,
+        "seq_len": 2048,
+        "group_size": 1,
+        "prefetch_depth": 4,
+        "qkv_bias": false,
+        "weight_element_bytes": 2,
+        "memory_element_bytes": 2,
+        "kv_cache_element_bytes": 2,
+        "kv_cache_capacity": 2048
+      },
+      "expected": {
+        "derived": {"head_dim": 64, "kv_width": 2048, "effective_group": 1, "num_groups": 24, "pipeline_slots": 4},
+        "parameters": {"standard_wv_params_per_layer": 4194304, "standard_wv_params_total": 100663296, "ma_table_elements": 1572864000},
+        "placement": {
+          "standard_value_side": {"gpu_parameters": 100663296, "cpu_parameters": 0, "gpu_parameter_bytes": 201326592, "cpu_parameter_bytes": 0},
+          "ma_gpu_value_side": {"gpu_parameters": 1572864000, "cpu_parameters": 0, "gpu_parameter_bytes": 3145728000, "cpu_parameter_bytes": 0},
+          "ma_offload_value_side": {"gpu_parameters": 0, "cpu_parameters": 1572864000, "gpu_parameter_bytes": 0, "cpu_parameter_bytes": 3145728000},
+          "deltas_vs_standard": {"ma_offload_gpu_parameters": -100663296, "ma_offload_cpu_parameters": 1572864000, "ma_gpu_gpu_parameters": 1472200704, "ma_offload_gpu_parameter_bytes": -201326592, "ma_offload_cpu_parameter_bytes": 3145728000, "ma_gpu_gpu_parameter_bytes": 2944401408}
+        },
+        "staging": {
+          "pipeline": {"allocated_elements": 134217728, "pinned_cpu_bytes": 268435456, "gpu_bytes": 268435456},
+          "bulk": {"allocated_elements": 805306368, "pinned_cpu_bytes": 1610612736, "gpu_bytes": 1610612736}
+        },
+        "transfer": {"h2d_payload_elements_per_forward": 805306368, "h2d_payload_bytes_per_forward": 1610612736},
+        "kv_cache": {"elements": 1610612736, "bytes": 3221225472}
+      }
+    },
+    {
+      "id": "group_clamp_guard",
+      "config": {
+        "hidden_size": 12,
+        "num_heads": 3,
+        "num_kv_heads": 1,
+        "num_layers": 3,
+        "vocab_size": 50,
+        "batch_size": 1,
+        "seq_len": 2,
+        "group_size": 99,
+        "prefetch_depth": 8,
+        "qkv_bias": true,
+        "weight_element_bytes": 2,
+        "memory_element_bytes": 2,
+        "kv_cache_element_bytes": 4,
+        "kv_cache_capacity": 5
+      },
+      "expected": {
+        "derived": {"head_dim": 4, "kv_width": 4, "effective_group": 3, "num_groups": 1, "pipeline_slots": 1},
+        "parameters": {"standard_wv_params_per_layer": 52, "standard_wv_params_total": 156, "ma_table_elements": 600},
+        "placement": {
+          "standard_value_side": {"gpu_parameters": 156, "cpu_parameters": 0, "gpu_parameter_bytes": 312, "cpu_parameter_bytes": 0},
+          "ma_gpu_value_side": {"gpu_parameters": 600, "cpu_parameters": 0, "gpu_parameter_bytes": 1200, "cpu_parameter_bytes": 0},
+          "ma_offload_value_side": {"gpu_parameters": 0, "cpu_parameters": 600, "gpu_parameter_bytes": 0, "cpu_parameter_bytes": 1200},
+          "deltas_vs_standard": {"ma_offload_gpu_parameters": -156, "ma_offload_cpu_parameters": 600, "ma_gpu_gpu_parameters": 444, "ma_offload_gpu_parameter_bytes": -312, "ma_offload_cpu_parameter_bytes": 1200, "ma_gpu_gpu_parameter_bytes": 888}
+        },
+        "staging": {
+          "pipeline": {"allocated_elements": 24, "pinned_cpu_bytes": 48, "gpu_bytes": 48},
+          "bulk": {"allocated_elements": 24, "pinned_cpu_bytes": 48, "gpu_bytes": 48}
+        },
+        "transfer": {"h2d_payload_elements_per_forward": 24, "h2d_payload_bytes_per_forward": 48},
+        "kv_cache": {"elements": 120, "bytes": 480}
+      }
+    },
+    {
+      "id": "gqa_mixed_width",
+      "config": {
+        "hidden_size": 32,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "num_layers": 5,
+        "vocab_size": 64,
+        "batch_size": 3,
+        "seq_len": 7,
+        "group_size": 2,
+        "prefetch_depth": 10,
+        "qkv_bias": true,
+        "weight_element_bytes": 2,
+        "memory_element_bytes": 1,
+        "kv_cache_element_bytes": 4,
+        "kv_cache_capacity": 11
+      },
+      "expected": {
+        "derived": {"head_dim": 4, "kv_width": 8, "effective_group": 2, "num_groups": 3, "pipeline_slots": 3},
+        "parameters": {"standard_wv_params_per_layer": 264, "standard_wv_params_total": 1320, "ma_table_elements": 2560},
+        "placement": {
+          "standard_value_side": {"gpu_parameters": 1320, "cpu_parameters": 0, "gpu_parameter_bytes": 2640, "cpu_parameter_bytes": 0},
+          "ma_gpu_value_side": {"gpu_parameters": 2560, "cpu_parameters": 0, "gpu_parameter_bytes": 2560, "cpu_parameter_bytes": 0},
+          "ma_offload_value_side": {"gpu_parameters": 0, "cpu_parameters": 2560, "gpu_parameter_bytes": 0, "cpu_parameter_bytes": 2560},
+          "deltas_vs_standard": {"ma_offload_gpu_parameters": -1320, "ma_offload_cpu_parameters": 2560, "ma_gpu_gpu_parameters": 1240, "ma_offload_gpu_parameter_bytes": -2640, "ma_offload_cpu_parameter_bytes": 2560, "ma_gpu_gpu_parameter_bytes": -80}
+        },
+        "staging": {
+          "pipeline": {"allocated_elements": 1008, "pinned_cpu_bytes": 1008, "gpu_bytes": 1008},
+          "bulk": {"allocated_elements": 840, "pinned_cpu_bytes": 840, "gpu_bytes": 840}
+        },
+        "transfer": {"h2d_payload_elements_per_forward": 840, "h2d_payload_bytes_per_forward": 840},
+        "kv_cache": {"elements": 2640, "bytes": 10560}
+      }
+    }
+  ]
+}
