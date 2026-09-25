@@ -72,10 +72,13 @@ L    number of layers
 V    vocabulary size
 B    batch size
 S    current input sequence length
-G    offload group size
+G    requested offload group size
+Ge   effective group size = min(G, L)
 P    prefetch depth
-Z    ceil(L/G)
-b    bytes per memory-table element
+Z    ceil(L/Ge)
+bw   bytes per ordinary model-weight element
+bm   bytes per MA memory/staging element
+bkv  bytes per KV-cache element
 ~~~
 
 ### Value-side parameter delta
@@ -118,6 +121,27 @@ ma_gpu GPU params - standard GPU params =
     V*L*K - L*Wv_params_per_layer
 ~~~
 
+Byte deltas must use the actual element width of each allocation rather than
+assuming that ordinary model weights, the MA table, and KV cache always share
+one dtype:
+
+~~~text
+standard Wv bytes =
+    L * Wv_params_per_layer * bw
+
+MA table bytes =
+    V * L * K * bm
+
+ma_offload GPU parameter-byte delta vs standard =
+    -standard Wv bytes
+
+ma_offload CPU parameter-byte delta vs standard =
+    +MA table bytes
+
+ma_gpu GPU parameter-byte delta vs standard =
+    MA table bytes - standard Wv bytes
+~~~
+
 These are parameter **deltas**, not complete model totals.
 
 All common model parameters cancel from the delta.
@@ -127,24 +151,31 @@ All common model parameters cancel from the delta.
 The pinned pipeline offloader preallocates bounded pinned-host and GPU slots.
 
 ~~~text
+effective_group =
+    min(G, L)
+
 pipeline_slots =
-    min(P, ceil(L/G))
+    min(P, ceil(L/effective_group))
 
 pipeline pinned CPU bytes =
-    pipeline_slots * B*S*G*K*b
+    pipeline_slots * B*S*effective_group*K*bm
 
 pipeline GPU staging bytes =
-    pipeline_slots * B*S*G*K*b
+    pipeline_slots * B*S*effective_group*K*bm
 ~~~
+
+The exact upstream pipeline clamps a requested group larger than the layer
+count to the number of layers before allocating slots. BENCH-001A mirrors that
+source behavior rather than extrapolating the requested G literally.
 
 The default decode path uses a bulk gather/H2D buffer:
 
 ~~~text
 bulk pinned CPU bytes =
-    B*S*L*K*b
+    B*S*L*K*bm
 
 bulk GPU staging bytes =
-    B*S*L*K*b
+    B*S*L*K*bm
 ~~~
 
 These buffers are **not model parameters**.
