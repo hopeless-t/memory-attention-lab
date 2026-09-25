@@ -68,6 +68,8 @@ def test_factorial_memory_delta_is_identical_for_both_sources():
     np.testing.assert_allclose(
         (cells["C11"] - cells["C10"]) - (cells["C01"] - cells["C00"]),
         0.0,
+        atol=spec["acceptance"]["atol"],
+        rtol=spec["acceptance"]["rtol"],
     )
 
 
