@@ -8,23 +8,25 @@ on:
       - research/val002-executor
     paths:
       - "pyproject.toml"
-      - "specs/VAL-002.reference.json"
+      - "specs/VAL-001.json"
+      - "specs/VAL-002.json"
       - "specs/VAL-001.json"
       - "specs/VAL-001.json"
       - "src/memory_attention_lab/attention/value_sources.py"
       - "src/memory_attention_lab/attention/__init__.py"
       - "src/memory_attention_lab/experiments/val002.py"
-      - "tests/test_val002_reference.py"
+      - "tests/test_val002.py"
       - "docs/VAL-002.md"
       - ".github/workflows/val002.yml"
   pull_request:
     paths:
       - "pyproject.toml"
-      - "specs/VAL-002.reference.json"
+      - "specs/VAL-001.json"
+      - "specs/VAL-002.json"
       - "src/memory_attention_lab/attention/value_sources.py"
       - "src/memory_attention_lab/attention/__init__.py"
       - "src/memory_attention_lab/experiments/val002.py"
-      - "tests/test_val002_reference.py"
+      - "tests/test_val002.py"
       - "docs/VAL-002.md"
       - ".github/workflows/val002.yml"
 
