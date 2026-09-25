@@ -326,9 +326,12 @@ def main() -> int:
     )
     p.add_argument("--execution-id", default=None)
     p.add_argument(
-        "--probe-only",
+        "--execute",
         action="store_true",
-        help="verify source/hardware and print the frozen command without timing",
+        help=(
+            "run the real source benchmark; without this flag the command is "
+            "probe-only and produces no performance result"
+        ),
     )
     args = p.parse_args()
 
@@ -341,6 +344,12 @@ def main() -> int:
             expected_benchmark_blob=source["upstream_benchmark_blob"],
         )
 
+        upstream_resolved = args.upstream_dir.resolve()
+        out_resolved = args.out_dir.resolve()
+        if out_resolved == upstream_resolved or upstream_resolved in out_resolved.parents:
+            raise CaptureError(
+                "out-dir must be outside the frozen upstream checkout"
+            )
         args.out_dir.mkdir(parents=True, exist_ok=True)
         result_path = (args.out_dir / "bmk_results.json").resolve()
         hardware_path = (args.out_dir / "hardware.json").resolve()
@@ -373,9 +382,10 @@ def main() -> int:
             json.dumps(probe_record, indent=2, sort_keys=True) + "\n"
         )
 
-        if args.probe_only:
+        if not args.execute:
             print(json.dumps(probe_record, indent=2, sort_keys=True))
             print("BENCH-001B probe only: no timing executed")
+            print("Use --execute only after the GPU resource is explicitly approved.")
             return 0
 
         proc = subprocess.run(
