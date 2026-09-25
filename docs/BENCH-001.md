@@ -531,8 +531,21 @@ directory README.
 
 BENCH-001A is complete.
 
-The next BENCH-001 sub-lane is **BENCH-001B**, which requires an identified CUDA
+The BENCH-001B B0 protocol and CPU-side evidence validator are now validated.
+
+See:
+
+~~~text
+docs/BENCH-001B.md
+specs/BENCH-001B.protocol.json
+src/memory_attention_lab/experiments/bench001b_validate.py
+research/decisions/DS-006-bench001b-execution.md
+~~~
+
+The remaining BENCH-001B B1 transition requires an identified qualifying CUDA
 system and real source-faithful gather / H2D / overlap / model timing.
+
+No paid GPU resource is authorized by the protocol.
 
 CPU-only hosted timing or a bandwidth model must not be promoted into
 BENCH-001B performance evidence.
