@@ -1,0 +1,22 @@
+{
+  "factorial_interaction_max_abs": 2.220446049250313e-16,
+  "historical_lambda_one_recovers_embedding_max_abs_error": 0.0,
+  "historical_lambda_zero_recovers_Wv_max_abs_error": 0.0,
+  "historical_vs_additive_max_abs_delta": 3.5784200537048947,
+  "known_answer_C00_max_abs_error": 0.0,
+  "known_answer_C01_max_abs_error": 0.0,
+  "known_answer_C10_max_abs_error": 0.0,
+  "known_answer_C11_max_abs_error": 0.0,
+  "known_answer_HIST-VE_max_abs_error": 0.0,
+  "known_answer_memory_max_abs_error": 0.0,
+  "known_answer_rotated_contextual_wk_max_abs_error": 0.0,
+  "memory_delta_at_Wk_max_abs_error": 2.220446049250313e-16,
+  "memory_delta_at_Wv_max_abs_error": 2.220446049250313e-16,
+  "parent_C10_content_key_anchor_max_abs_error": 0.0,
+  "parent_C11_value_anchor_max_abs_error": 0.0,
+  "parent_memory_anchor_max_abs_error": 0.0,
+  "parent_rotated_key_anchor_max_abs_error": 0.0,
+  "post_rope_guard_delta": 1.1667631545428359,
+  "shared_memory_delta_max_abs_error": 2.220446049250313e-16,
+  "source_contrast_consistency_max_abs_error": 2.220446049250313e-16
+}

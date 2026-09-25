@@ -1,0 +1,105 @@
+{
+  "Wk_perturbation_guard": {
+    "C00_unchanged": true,
+    "C01_unchanged": true,
+    "C10_changed": true,
+    "C11_changed": true,
+    "passed": true
+  },
+  "Wv_perturbation_guard": {
+    "C00_changed": true,
+    "C10_unchanged": true,
+    "C11_unchanged": true,
+    "HIST-VE_changed": true,
+    "passed": true
+  },
+  "factorial_interaction_zero_for_frozen_value_path": {
+    "max_abs_value": 2.220446049250313e-16,
+    "passed": true
+  },
+  "historical_lambda_one_recovers_embedding": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "historical_lambda_zero_recovers_Wv": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "historical_lane_is_not_clean_additive_control": {
+    "max_abs_delta": 3.5784200537048947,
+    "minimum_required_delta": 0.1,
+    "passed": true
+  },
+  "known_answer_C00": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "known_answer_C01": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "known_answer_C10": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "known_answer_C11": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "known_answer_HIST-VE": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "known_answer_memory": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "known_answer_rotated_contextual_wk": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "memory_delta_at_Wk": {
+    "max_abs_error": 2.220446049250313e-16,
+    "passed": true
+  },
+  "memory_delta_at_Wv": {
+    "max_abs_error": 2.220446049250313e-16,
+    "passed": true
+  },
+  "parent_C10_content_key_anchor": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "parent_C11_value_anchor": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "parent_fixture_identity": {
+    "memory_table": true,
+    "norm_weight": true,
+    "passed": true,
+    "positions": true,
+    "token_ids": true
+  },
+  "parent_memory_anchor": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "parent_rotated_key_anchor": {
+    "max_abs_error": 0.0,
+    "passed": true
+  },
+  "pre_rope_value_guard": {
+    "minimum_required_delta": 0.1,
+    "passed": true,
+    "wrong_post_rope_value_max_delta": 1.1667631545428359
+  },
+  "shared_memory_delta": {
+    "max_abs_error": 2.220446049250313e-16,
+    "passed": true
+  },
+  "source_contrast_consistency": {
+    "max_abs_error": 2.220446049250313e-16,
+    "passed": true
+  }
+}
