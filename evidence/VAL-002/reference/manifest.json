@@ -1,0 +1,26 @@
+{
+  "authority": {
+    "factorial_lane": "local causal control",
+    "historical_lane": "source-fidelity control"
+  },
+  "experiment_id": "VAL-002",
+  "parent_val001_spec_sha256": "af5b18a75336604f1f0121a1c2b86b8fa8b72af412f2fb5b91b850606c83b99e",
+  "provenance": {
+    "git_commit": "6fa2003032285de3e01d9930b530ac13baa761f2",
+    "numpy": "2.5.3",
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": "3.12.14"
+  },
+  "schema_version": 1,
+  "source": {
+    "design_commit": "283927518dae597aec51746b2b2cf08e8b66f166",
+    "historical_file_blob": "c3e21231926be6904e79720ffb19895c5493ed1c",
+    "historical_path": "records/track_1_short/2024-12-04_ValueEmbed/train_gpt2.py",
+    "historical_repository": "KellerJordan/modded-nanogpt",
+    "historical_repository_commit": "bc3a0c2d640d0d73dedaef87eae26148d2e32afb",
+    "memory_attention_paper": "arXiv:2609.28399",
+    "parent_val001_spec_sha256": "af5b18a75336604f1f0121a1c2b86b8fa8b72af412f2fb5b91b850606c83b99e"
+  },
+  "spec_sha256": "87d2332bcfb907821317351d63a6d23eed545c7fce30ce1d3e2a0301a142deb5",
+  "status": "PASS"
+}
