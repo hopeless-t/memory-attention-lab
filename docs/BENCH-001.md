@@ -1,6 +1,6 @@
 # BENCH-001 — Residency Baseline
 
-> **Status:** ACCOUNTING EXECUTOR VALIDATED — CANONICAL PUBLICATION PENDING  
+> **Status:** BENCH-001A FROZEN REFERENCE — PASS · BENCH-001B NOT STARTED  
 > **Scientific authority:** benchmark design only  
 > **Performance authority:** NONE until a valid CUDA measurement exists  
 > **Training authority:** NONE
@@ -508,12 +508,34 @@ These are exact deterministic accounting outputs under the frozen configuration.
 They are **not** measured CUDA latency, peak allocator usage, or proof that the
 transfer can be hidden.
 
+## Canonical BENCH-001A evidence
+
+The reviewed canonical reference is stored at:
+
+~~~text
+evidence/BENCH-001A/reference/
+~~~
+
+It was generated from merged source commit:
+
+~~~text
+bba45d936ba8f04e02e8e63dae106e6641ed1585
+~~~
+
+by GitHub Actions run 36078561778.
+
+Publication metadata and byte-identity information are recorded in the evidence
+directory README.
+
 ## Next implementation step
 
-Publish the reviewed BENCH-001A evidence from a merged-main run.
+BENCH-001A is complete.
 
-Only after BENCH-001A is canonical should BENCH-001B CUDA measurement be
-implemented or borrowed.
+The next BENCH-001 sub-lane is **BENCH-001B**, which requires an identified CUDA
+system and real source-faithful gather / H2D / overlap / model timing.
+
+CPU-only hosted timing or a bandwidth model must not be promoted into
+BENCH-001B performance evidence.
 
 ## Non-claims
 

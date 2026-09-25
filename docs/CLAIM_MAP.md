@@ -279,8 +279,36 @@ BENCH-001A
 **Current status**
 
 ~~~text
-NOT_TESTED
+CONSISTENT
 ~~~
+
+**Evidence**
+
+The canonical BENCH-001A reference is stored at:
+
+~~~text
+evidence/BENCH-001A/reference/
+~~~
+
+Under the frozen source-default accounting contract it reports:
+
+~~~text
+Standard Wv accelerator-resident parameter bytes:
+    201,326,592
+
+MA-Offload GPU parameter-byte delta vs Standard:
+    -201,326,592
+
+MA table host-resident parameter bytes:
+    3,145,728,000
+~~~
+
+This is consistent with the narrowed MA-004 placement claim.
+
+Temporary staging and KV-cache storage are reported separately and are not
+evidence of latency hiding or total deployment-memory savings.
+
+MA-005 remains NOT_TESTED.
 
 ---
 

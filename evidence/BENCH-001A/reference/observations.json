@@ -1,0 +1,250 @@
+{
+  "gqa_mixed_width": {
+    "derived": {
+      "effective_group": 2,
+      "head_dim": 4,
+      "kv_width": 8,
+      "num_groups": 3,
+      "pipeline_slots": 3
+    },
+    "kv_cache": {
+      "bytes": 10560,
+      "elements": 2640
+    },
+    "parameters": {
+      "ma_table_elements": 2560,
+      "standard_wv_params_per_layer": 264,
+      "standard_wv_params_total": 1320
+    },
+    "placement": {
+      "deltas_vs_standard": {
+        "ma_gpu_gpu_parameter_bytes": -80,
+        "ma_gpu_gpu_parameters": 1240,
+        "ma_offload_cpu_parameter_bytes": 2560,
+        "ma_offload_cpu_parameters": 2560,
+        "ma_offload_gpu_parameter_bytes": -2640,
+        "ma_offload_gpu_parameters": -1320
+      },
+      "ma_gpu_value_side": {
+        "cpu_parameter_bytes": 0,
+        "cpu_parameters": 0,
+        "gpu_parameter_bytes": 2560,
+        "gpu_parameters": 2560
+      },
+      "ma_offload_value_side": {
+        "cpu_parameter_bytes": 2560,
+        "cpu_parameters": 2560,
+        "gpu_parameter_bytes": 0,
+        "gpu_parameters": 0
+      },
+      "standard_value_side": {
+        "cpu_parameter_bytes": 0,
+        "cpu_parameters": 0,
+        "gpu_parameter_bytes": 2640,
+        "gpu_parameters": 1320
+      }
+    },
+    "staging": {
+      "bulk": {
+        "allocated_elements": 840,
+        "gpu_bytes": 840,
+        "pinned_cpu_bytes": 840
+      },
+      "pipeline": {
+        "allocated_elements": 1008,
+        "gpu_bytes": 1008,
+        "pinned_cpu_bytes": 1008
+      }
+    },
+    "transfer": {
+      "h2d_payload_bytes_per_forward": 840,
+      "h2d_payload_elements_per_forward": 840
+    }
+  },
+  "group_clamp_guard": {
+    "derived": {
+      "effective_group": 3,
+      "head_dim": 4,
+      "kv_width": 4,
+      "num_groups": 1,
+      "pipeline_slots": 1
+    },
+    "kv_cache": {
+      "bytes": 480,
+      "elements": 120
+    },
+    "parameters": {
+      "ma_table_elements": 600,
+      "standard_wv_params_per_layer": 52,
+      "standard_wv_params_total": 156
+    },
+    "placement": {
+      "deltas_vs_standard": {
+        "ma_gpu_gpu_parameter_bytes": 888,
+        "ma_gpu_gpu_parameters": 444,
+        "ma_offload_cpu_parameter_bytes": 1200,
+        "ma_offload_cpu_parameters": 600,
+        "ma_offload_gpu_parameter_bytes": -312,
+        "ma_offload_gpu_parameters": -156
+      },
+      "ma_gpu_value_side": {
+        "cpu_parameter_bytes": 0,
+        "cpu_parameters": 0,
+        "gpu_parameter_bytes": 1200,
+        "gpu_parameters": 600
+      },
+      "ma_offload_value_side": {
+        "cpu_parameter_bytes": 1200,
+        "cpu_parameters": 600,
+        "gpu_parameter_bytes": 0,
+        "gpu_parameters": 0
+      },
+      "standard_value_side": {
+        "cpu_parameter_bytes": 0,
+        "cpu_parameters": 0,
+        "gpu_parameter_bytes": 312,
+        "gpu_parameters": 156
+      }
+    },
+    "staging": {
+      "bulk": {
+        "allocated_elements": 24,
+        "gpu_bytes": 48,
+        "pinned_cpu_bytes": 48
+      },
+      "pipeline": {
+        "allocated_elements": 24,
+        "gpu_bytes": 48,
+        "pinned_cpu_bytes": 48
+      }
+    },
+    "transfer": {
+      "h2d_payload_bytes_per_forward": 48,
+      "h2d_payload_elements_per_forward": 24
+    }
+  },
+  "small_known_answer": {
+    "derived": {
+      "effective_group": 2,
+      "head_dim": 4,
+      "kv_width": 16,
+      "num_groups": 3,
+      "pipeline_slots": 2
+    },
+    "kv_cache": {
+      "bytes": 6144,
+      "elements": 3072
+    },
+    "parameters": {
+      "ma_table_elements": 9600,
+      "standard_wv_params_per_layer": 256,
+      "standard_wv_params_total": 1536
+    },
+    "placement": {
+      "deltas_vs_standard": {
+        "ma_gpu_gpu_parameter_bytes": 16128,
+        "ma_gpu_gpu_parameters": 8064,
+        "ma_offload_cpu_parameter_bytes": 19200,
+        "ma_offload_cpu_parameters": 9600,
+        "ma_offload_gpu_parameter_bytes": -3072,
+        "ma_offload_gpu_parameters": -1536
+      },
+      "ma_gpu_value_side": {
+        "cpu_parameter_bytes": 0,
+        "cpu_parameters": 0,
+        "gpu_parameter_bytes": 19200,
+        "gpu_parameters": 9600
+      },
+      "ma_offload_value_side": {
+        "cpu_parameter_bytes": 19200,
+        "cpu_parameters": 9600,
+        "gpu_parameter_bytes": 0,
+        "gpu_parameters": 0
+      },
+      "standard_value_side": {
+        "cpu_parameter_bytes": 0,
+        "cpu_parameters": 0,
+        "gpu_parameter_bytes": 3072,
+        "gpu_parameters": 1536
+      }
+    },
+    "staging": {
+      "bulk": {
+        "allocated_elements": 576,
+        "gpu_bytes": 1152,
+        "pinned_cpu_bytes": 1152
+      },
+      "pipeline": {
+        "allocated_elements": 384,
+        "gpu_bytes": 768,
+        "pinned_cpu_bytes": 768
+      }
+    },
+    "transfer": {
+      "h2d_payload_bytes_per_forward": 1152,
+      "h2d_payload_elements_per_forward": 576
+    }
+  },
+  "source_defaults_prefill": {
+    "derived": {
+      "effective_group": 1,
+      "head_dim": 64,
+      "kv_width": 2048,
+      "num_groups": 24,
+      "pipeline_slots": 4
+    },
+    "kv_cache": {
+      "bytes": 3221225472,
+      "elements": 1610612736
+    },
+    "parameters": {
+      "ma_table_elements": 1572864000,
+      "standard_wv_params_per_layer": 4194304,
+      "standard_wv_params_total": 100663296
+    },
+    "placement": {
+      "deltas_vs_standard": {
+        "ma_gpu_gpu_parameter_bytes": 2944401408,
+        "ma_gpu_gpu_parameters": 1472200704,
+        "ma_offload_cpu_parameter_bytes": 3145728000,
+        "ma_offload_cpu_parameters": 1572864000,
+        "ma_offload_gpu_parameter_bytes": -201326592,
+        "ma_offload_gpu_parameters": -100663296
+      },
+      "ma_gpu_value_side": {
+        "cpu_parameter_bytes": 0,
+        "cpu_parameters": 0,
+        "gpu_parameter_bytes": 3145728000,
+        "gpu_parameters": 1572864000
+      },
+      "ma_offload_value_side": {
+        "cpu_parameter_bytes": 3145728000,
+        "cpu_parameters": 1572864000,
+        "gpu_parameter_bytes": 0,
+        "gpu_parameters": 0
+      },
+      "standard_value_side": {
+        "cpu_parameter_bytes": 0,
+        "cpu_parameters": 0,
+        "gpu_parameter_bytes": 201326592,
+        "gpu_parameters": 100663296
+      }
+    },
+    "staging": {
+      "bulk": {
+        "allocated_elements": 805306368,
+        "gpu_bytes": 1610612736,
+        "pinned_cpu_bytes": 1610612736
+      },
+      "pipeline": {
+        "allocated_elements": 134217728,
+        "gpu_bytes": 268435456,
+        "pinned_cpu_bytes": 268435456
+      }
+    },
+    "transfer": {
+      "h2d_payload_bytes_per_forward": 1610612736,
+      "h2d_payload_elements_per_forward": 805306368
+    }
+  }
+}
