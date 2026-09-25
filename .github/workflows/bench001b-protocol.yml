@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - research/bench001b-protocol
+      - research/bench001b-capture-kit
     paths:
       - "specs/BENCH-001B.protocol.json"
       - "src/memory_attention_lab/experiments/bench001b_validate.py"
@@ -14,6 +15,9 @@ on:
       - "research/bench001b_execution_mc.py"
       - "research/decisions/DS-006-bench001b-execution.md"
       - "docs/BENCH-001B.md"
+      - "docs/BENCH-001B-RUNBOOK.md"
+      - "src/memory_attention_lab/experiments/bench001b_capture.py"
+      - "tests/test_bench001b_capture.py"
       - ".github/workflows/bench001b-protocol.yml"
   pull_request:
     paths:
@@ -24,6 +28,9 @@ on:
       - "research/bench001b_execution_mc.py"
       - "research/decisions/DS-006-bench001b-execution.md"
       - "docs/BENCH-001B.md"
+      - "docs/BENCH-001B-RUNBOOK.md"
+      - "src/memory_attention_lab/experiments/bench001b_capture.py"
+      - "tests/test_bench001b_capture.py"
       - ".github/workflows/bench001b-protocol.yml"
 
 permissions:

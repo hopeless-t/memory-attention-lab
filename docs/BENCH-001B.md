@@ -341,7 +341,11 @@ BENCH-001A
 BENCH-001B B0
     PROTOCOL VALIDATED — PASS
 
-BENCH-001B B1
+BENCH-001B B1 capture kit
+    VALIDATED — PASS
+    NO PERFORMANCE AUTHORITY
+
+BENCH-001B B1 CUDA execution
     NOT EXECUTED
     NO GPU RESOURCE AUTHORIZED
 ~~~
@@ -415,3 +419,23 @@ probabilities.
 
 The next state transition requires an identified qualifying GPU execution
 resource. No such resource is authorized by B0.
+
+
+## B1 capture-kit checkpoint
+
+The B1 capture kit and runbook are validated on standard public Actions.
+
+See:
+
+~~~text
+src/memory_attention_lab/experiments/bench001b_capture.py
+tests/test_bench001b_capture.py
+docs/BENCH-001B-RUNBOOK.md
+~~~
+
+The validated default remains **probe-only**.
+
+Real benchmark timing requires explicit `--execute` after the execution
+resource has been approved.
+
+This checkpoint does not move MA-005.

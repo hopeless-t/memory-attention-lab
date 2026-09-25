@@ -35,6 +35,7 @@ VAL-002 value-source decomposition
 BENCH-001 residency baseline
     ACCOUNTING FROZEN REFERENCE — PASS
     CUDA B0 PROTOCOL — VALIDATED
+    CUDA B1 CAPTURE KIT — VALIDATED
     CUDA B1 MEASUREMENT — NOT EXECUTED
 
 BENCH-002 value reconstruction / MA-Recall
