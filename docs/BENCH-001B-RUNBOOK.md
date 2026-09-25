@@ -1,6 +1,6 @@
 # BENCH-001B B1 Capture Runbook
 
-> **Status:** EXECUTION KIT CANDIDATE  
+> **Status:** EXECUTION KIT VALIDATED — PASS  
 > **Performance evidence:** NONE until a real approved GPU execution completes  
 > **Paid-resource authority:** NONE
 
@@ -206,7 +206,8 @@ B0 protocol:
     VALIDATED — PASS
 
 B1 capture kit:
-    CANDIDATE until CPU-side regression tests pass
+    VALIDATED — PASS
+    4 environments / 53 tests per lane
 
 B1 real CUDA execution:
     NOT EXECUTED
@@ -214,3 +215,39 @@ B1 real CUDA execution:
 paid GPU:
     NOT AUTHORIZED BY THIS REPOSITORY
 ~~~
+
+
+## Validation checkpoint
+
+The capture kit was validated on public GitHub Actions before any real GPU
+execution:
+
+~~~text
+run:
+36080460403
+
+source commit:
+1428a9dc2b40a61e8ec2af6e9536a193c87566fd
+
+Ubuntu 24.04 / Python 3.12:
+PASS
+
+Ubuntu 24.04 / Python 3.13:
+PASS
+
+macOS 15 / Python 3.12:
+PASS
+
+macOS 15 / Python 3.13:
+PASS
+
+full suite:
+53 tests PASS
+
+execution-topology decision support:
+1.5 million states PASS
+~~~
+
+This validates capture-kit behavior and safety boundaries only.
+
+No CUDA timing was executed.
