@@ -1,0 +1,13 @@
+{
+  "case_count": 4,
+  "passed_case_count": 4,
+  "source_defaults": {
+    "bulk_gpu_staging_bytes": 1610612736,
+    "h2d_payload_bytes_per_forward": 1610612736,
+    "kv_cache_bytes": 3221225472,
+    "ma_offload_gpu_parameter_byte_delta_vs_standard": -201326592,
+    "ma_table_bytes": 3145728000,
+    "pipeline_gpu_staging_bytes": 268435456,
+    "standard_wv_bytes": 201326592
+  }
+}
