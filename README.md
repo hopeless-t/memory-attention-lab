@@ -34,7 +34,8 @@ VAL-002 value-source decomposition
 
 BENCH-001 residency baseline
     ACCOUNTING FROZEN REFERENCE — PASS
-    CUDA MEASUREMENT — NOT STARTED
+    CUDA B0 PROTOCOL — VALIDATED
+    CUDA B1 MEASUREMENT — NOT EXECUTED
 
 BENCH-002 value reconstruction / MA-Recall
     NOT STARTED
