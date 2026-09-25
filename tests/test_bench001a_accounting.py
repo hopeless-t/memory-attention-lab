@@ -158,7 +158,7 @@ def test_python_integer_accounting_does_not_overflow():
         "num_heads": 128,
         "num_kv_heads": 128,
         "num_layers": 4096,
-        "vocab_size": 10000000,
+        "vocab_size": 10000000000,
         "batch_size": 1024,
         "seq_len": 1048576,
         "group_size": 4096,
@@ -167,7 +167,7 @@ def test_python_integer_accounting_does_not_overflow():
         "weight_element_bytes": 8,
         "memory_element_bytes": 8,
         "kv_cache_element_bytes": 8,
-        "kv_cache_capacity": 1048576,
+        "kv_cache_capacity": 1048577,
     }
     result = account_residency(config)
     assert result["placement"]["ma_gpu_value_side"]["gpu_parameter_bytes"] > 2**63
