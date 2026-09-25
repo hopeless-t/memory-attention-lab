@@ -328,10 +328,18 @@ This is a benchmark-specific result, not a universal speed claim.
 
 The local test must reproduce the protocol before changing hardware, batch, sequence length, or memory width.
 
-**Test**
+**Protocol gate**
 
 ~~~text
-BENCH-001B
+BENCH-001B B0
+    VALIDATED — PASS
+    no performance authority
+~~~
+
+**Performance test**
+
+~~~text
+BENCH-001B B1
 ~~~
 
 **Current status**
@@ -339,6 +347,10 @@ BENCH-001B
 ~~~text
 NOT_TESTED
 ~~~
+
+B0 validates source pins, capability requirements, evidence structure, raw
+round statistics, and placement metadata. It does not move MA-005 because no
+real CUDA performance bundle has been executed.
 
 ---
 
