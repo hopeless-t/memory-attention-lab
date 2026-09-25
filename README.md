@@ -30,10 +30,10 @@ VAL-001 Memory Attention algebra
     FROZEN REFERENCE — PASS
 
 VAL-002 value-source decomposition
-    EXECUTOR CANDIDATE — VALIDATION PENDING
+    FROZEN REFERENCE — PASS
 
 BENCH-001 residency baseline
-    NOT STARTED
+    NEXT
 
 BENCH-002 value reconstruction / MA-Recall
     NOT STARTED
@@ -42,9 +42,15 @@ EXP-001 controlled small-model comparison
     NOT STARTED
 ~~~
 
-The reviewed VAL-001 reference evidence is stored under
-`evidence/VAL-001/reference/`. Its PASS status validates only the frozen
-numerical contract and does not establish quality or performance superiority.
+The reviewed VAL-001 and VAL-002 reference evidence is stored under:
+
+~~~text
+evidence/VAL-001/reference/
+evidence/VAL-002/reference/
+~~~
+
+Their PASS states validate only the corresponding frozen numerical contracts.
+They do not establish model-quality or performance superiority.
 
 Memory Attention provides a concrete place to test the broader thesis because it changes both how attention values are constructed and where part of the model state may live.
 
@@ -115,8 +121,9 @@ Memory Attention asks a complementary question: can explicit memory **replace** 
 The initial literature map distinguishes several nearby mechanisms instead of treating them as equivalent:
 
 ~~~text
-Value Embedding
-    contextual V + token-specific memory
+Historical Value Embedding
+    learned mixture of contextual V projection
+    and token-specific embedding
     original value projection remains
 
 Per-Layer Embeddings / DeepEmbed
