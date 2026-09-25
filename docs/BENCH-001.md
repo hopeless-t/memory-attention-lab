@@ -1,6 +1,6 @@
 # BENCH-001 — Residency Baseline
 
-> **Status:** DESIGN FROZEN  
+> **Status:** ACCOUNTING EXECUTOR VALIDATED — CANONICAL PUBLICATION PENDING  
 > **Scientific authority:** benchmark design only  
 > **Performance authority:** NONE until a valid CUDA measurement exists  
 > **Training authority:** NONE
@@ -431,12 +431,88 @@ The selected design is dual-lane.
 The scope/cost stress case deliberately prefers accounting-only, preventing the
 dual-lane decision from being treated as a theorem.
 
+## BENCH-001A executable reference
+
+The deterministic accounting executor is implemented at:
+
+~~~text
+src/memory_attention_lab/measurement/residency.py
+src/memory_attention_lab/experiments/bench001a.py
+specs/BENCH-001A.reference.json
+~~~
+
+The reference fixture contains four explicit cases:
+
+~~~text
+small known answer
+source-default prefill anchor
+group-size > layers clamp guard
+GQA + bias + mixed element-width guard
+~~~
+
+The latest validated branch run also executes:
+
+~~~text
+full pytest:
+    Ubuntu 24.04 / Python 3.12
+    Ubuntu 24.04 / Python 3.13
+    macOS 15 / Python 3.12
+    macOS 15 / Python 3.13
+
+randomized accounting:
+    500,000 cases
+
+claim-partition decision support:
+    1.5 million simulated engineering decision states
+~~~
+
+All passed on the validated candidate.
+
+### Source-default accounting anchor
+
+For the pinned upstream default dimensions with BF16-sized model/memory/cache
+elements and prefill length/cache capacity 2048:
+
+~~~text
+Standard Wv parameter bytes:
+    201,326,592
+    192 MiB
+
+MA table bytes:
+    3,145,728,000
+    approximately 2.93 GiB
+
+MA-Offload GPU parameter-byte delta vs Standard:
+    -201,326,592
+    -192 MiB
+
+pipeline GPU staging bytes:
+    268,435,456
+    256 MiB
+
+bulk GPU staging bytes:
+    1,610,612,736
+    1.5 GiB
+
+logical H2D payload per full forward:
+    1,610,612,736
+    1.5 GiB
+
+KV-cache bytes at capacity 2048:
+    3,221,225,472
+    3.0 GiB
+~~~
+
+These are exact deterministic accounting outputs under the frozen configuration.
+
+They are **not** measured CUDA latency, peak allocator usage, or proof that the
+transfer can be hidden.
+
 ## Next implementation step
 
-Implement **BENCH-001A first** as a strict, framework-independent accounting
-oracle.
+Publish the reviewed BENCH-001A evidence from a merged-main run.
 
-Only after that accounting contract is trusted should the CUDA adapter be
+Only after BENCH-001A is canonical should BENCH-001B CUDA measurement be
 implemented or borrowed.
 
 ## Non-claims
