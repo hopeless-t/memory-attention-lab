@@ -14,7 +14,7 @@ from memory_attention_lab.experiments.val002 import SpecError, load_spec, run_va
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC_PATH = ROOT / "specs" / "VAL-002.json"
+SPEC_PATH = ROOT / "specs" / "VAL-002.reference.json"
 PARENT_PATH = ROOT / "specs" / "VAL-001.json"
 
 
