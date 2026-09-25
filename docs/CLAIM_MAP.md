@@ -245,6 +245,18 @@ B. latency overhead can be sufficiently hidden or tolerated
 
 A can be true while B is false.
 
+BENCH-001 therefore uses two evidence lanes:
+
+~~~text
+BENCH-001A
+    deterministic residency / staging accounting
+
+BENCH-001B
+    source-faithful CUDA performance measurement
+~~~
+
+A PASS in BENCH-001A does not establish the BENCH-001B latency claim.
+
 **Potential confounds**
 
 ~~~text
@@ -262,10 +274,11 @@ device generation
 synchronization protocol
 ~~~
 
-**Test**
+**Tests**
 
 ~~~text
-BENCH-001
+BENCH-001A
+BENCH-001B
 ~~~
 
 **Current status**
@@ -295,7 +308,7 @@ The local test must reproduce the protocol before changing hardware, batch, sequ
 **Test**
 
 ~~~text
-BENCH-001
+BENCH-001B
 ~~~
 
 **Current status**
@@ -439,7 +452,7 @@ persistent cache bytes
 
 **Experiment impact**
 
-BENCH-001 should report resident bytes directly rather than infer them from total parameters.
+BENCH-001A should report resident bytes directly rather than infer them from total parameters.
 
 **Current status**
 
@@ -476,7 +489,7 @@ prefetch fully hidden
 **Test**
 
 ~~~text
-BENCH-001
+BENCH-001B
 ~~~
 
 **Current status**
@@ -668,7 +681,7 @@ prefetch depth
 **Test**
 
 ~~~text
-BENCH-001
+BENCH-001B
 ~~~
 
 **Status**
@@ -731,7 +744,7 @@ For models with substantial token-indexed offloadable memory, total parameter co
 **Tests**
 
 ~~~text
-BENCH-001
+BENCH-001A
 EXP-001
 ~~~
 
@@ -750,19 +763,19 @@ NOT_TESTED
 | MA-001 | source mechanism | VAL-001 | CONSISTENT |
 | MA-002 | source inference claim | VAL-001 | CONSISTENT |
 | MA-003 | source quality claim | VAL-002 + EXP-001 | NOT_TESTED |
-| MA-004 | source systems claim | BENCH-001 | NOT_TESTED |
-| MA-005 | source benchmark claim | BENCH-001 | NOT_TESTED |
+| MA-004 | source systems claim | BENCH-001A + BENCH-001B | NOT_TESTED |
+| MA-005 | source benchmark claim | BENCH-001B | NOT_TESTED |
 | MA-006 | source proposed extension | VAL-001 + BENCH-002 | NOT_TESTED |
 | MA-007 | implementation observation | source readback | CONSISTENT |
 | CTRL-001 | prior-art boundary | all | CONSISTENT |
-| CTRL-002 | prior-art boundary | BENCH-001 | CONSISTENT |
-| CTRL-003 | systems hypothesis from sources | BENCH-001 | NOT_TESTED |
+| CTRL-002 | prior-art boundary | BENCH-001A | CONSISTENT |
+| CTRL-003 | systems hypothesis from sources | BENCH-001B | NOT_TESTED |
 | CTRL-004 | prior-art boundary | BENCH-002 | CONSISTENT |
 | CTRL-005 | experimental-control boundary | VAL-002 + EXP-001 | CONSISTENT |
-| HYP-001 | local hypothesis | BENCH-001 | NOT_TESTED |
+| HYP-001 | local hypothesis | BENCH-001B | NOT_TESTED |
 | HYP-002 | local hypothesis | BENCH-002 | NOT_TESTED |
 | HYP-003 | local hypothesis | VAL-002 + EXP-001 | NOT_TESTED |
-| HYP-004 | local hypothesis | BENCH-001 + EXP-001 | NOT_TESTED |
+| HYP-004 | local hypothesis | BENCH-001A + EXP-001 | NOT_TESTED |
 
 ## Rule for updates
 

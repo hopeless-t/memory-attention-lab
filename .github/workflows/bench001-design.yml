@@ -1,0 +1,108 @@
+name: BENCH-001 Design
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - research/bench001-design
+    paths:
+      - "specs/BENCH-001.json"
+      - "docs/BENCH-001.md"
+      - "docs/CLAIM_MAP.md"
+      - "research/bench001_design_mc.py"
+      - "research/decisions/DS-004-bench001-evidence-lanes.md"
+      - "README.md"
+      - ".github/workflows/bench001-design.yml"
+  pull_request:
+    paths:
+      - "specs/BENCH-001.json"
+      - "docs/BENCH-001.md"
+      - "docs/CLAIM_MAP.md"
+      - "research/bench001_design_mc.py"
+      - "research/decisions/DS-004-bench001-evidence-lanes.md"
+      - "README.md"
+      - ".github/workflows/bench001-design.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  design-check:
+    name: design check / ${{ matrix.os }} / py${{ matrix.python }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - macos-15
+        python:
+          - "3.12"
+          - "3.13"
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Validate BENCH-001 design JSON
+        run: |
+          python -m json.tool specs/BENCH-001.json > /dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = json.loads(Path("specs/BENCH-001.json").read_text())
+          assert p["schema_version"] == 1
+          assert p["experiment_id"] == "BENCH-001"
+          assert p["status"] == "DESIGN_ONLY"
+          assert p["claim_partition"]["residency"]["cuda_required"] is False
+          assert p["claim_partition"]["performance"]["cuda_required"] is True
+          assert "Do not infer CUDA latency from CPU-only Actions runners." in p["actions_role"]["prohibited_inference"]
+          print("BENCH-001 design contract: PASS")
+          PY
+
+  decision-support:
+    name: evidence-lane decision support / 1.5M states
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install NumPy
+        run: python -m pip install "numpy>=2.0,<3"
+
+      - name: Run BENCH-001 evidence-lane stress test
+        run: |
+          python research/bench001_design_mc.py \
+            --samples 300000 \
+            --seed 20260925
+
+      - name: Publish decision support in job summary
+        if: always()
+        run: |
+          if [ -f runs/decision-support/bench001-design/result.md ]; then
+            cat runs/decision-support/bench001-design/result.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload small decision-support artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bench001-design-decision-support
+          path: runs/decision-support/bench001-design/
+          if-no-files-found: error
+          retention-days: 7
