@@ -79,8 +79,21 @@ claim/source fidelity
 Option B is required to win the balanced, evidence-independence,
 interpretability, and maintainability scenarios.
 
-The minimal-churn stress case is intentionally allowed to prefer keeping the
-old structure or deferring change.
+The frozen 300,000-sample-per-scenario run produced:
+
+| Scenario | A compound | B narrow MA-004 | C split MA-004 | D defer |
+| --- | ---: | ---: | ---: | ---: |
+| balanced | 0.00% | 100.00% | 0.00% | 0.00% |
+| evidence independence heavy | 0.00% | 100.00% | 0.00% | 0.00% |
+| interpretability heavy | 0.00% | 100.00% | 0.00% | 0.00% |
+| maintainability heavy | 0.00% | 100.00% | 0.00% | 0.00% |
+| minimal churn heavy | 1.03% | 97.53% | 0.00% | 1.44% |
+
+The minimal-churn scenario was intentionally included as an adversarial stress
+case. It still selected option B in the frozen run.
+
+The implementation does not force a counterexample merely to make the decision
+look less robust.
 
 This is decision support, not scientific probability.
 
