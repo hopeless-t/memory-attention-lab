@@ -200,7 +200,15 @@ automation-heavy
 
 using 300,000 samples per scenario.
 
-The design run selected option C in every scenario.
+The frozen Actions run selected option C in every scenario:
+
+| Scenario | A GitHub T4 | B persistent self-hosted | C isolated + validator | D defer |
+| --- | ---: | ---: | ---: | ---: |
+| balanced | 0.00% | 0.48% | 99.30% | 0.22% |
+| source fidelity heavy | 0.00% | 0.74% | 99.05% | 0.21% |
+| public-repo security heavy | 0.03% | 0.01% | 97.57% | 2.39% |
+| paid-resource control heavy | 0.00% | 3.09% | 84.59% | 12.31% |
+| automation heavy | 2.61% | 17.44% | 79.95% | 0.00% |
 
 This is engineering decision support, not a probability of success or a
 provider reliability forecast.
