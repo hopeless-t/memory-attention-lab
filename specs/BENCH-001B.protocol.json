@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "experiment_id": "BENCH-001B",
+  "description": "Protocol and evidence-validation contract for source-faithful CUDA latency measurements.",
+  "authority": {
+    "lane": "cuda_performance",
+    "protocol_validation_is_performance_evidence": false,
+    "paid_resource_authorized": false
+  },
+  "parent": {
+    "bench001a_evidence_path": "evidence/BENCH-001A/reference/",
+    "bench001_design_git_blob_sha1": "c1fcab785da2358b61ac7006bc4b015f459bc869"
+  },
+  "source": {
+    "upstream_repository": "Joluck/memory-attention",
+    "upstream_commit": "8176f1feaff6724af670e70d75cd9767f8e38223",
+    "upstream_benchmark_blob": "9ce6143fe7df1422b2f617996395d238edd2cc1e"
+  },
+  "hardware_floor": {
+    "minimum_compute_capability": [8, 0],
+    "bf16_required": true,
+    "minimum_flash_attn_version": [2, 1],
+    "ultimate_runtime_gate": "upstream setup_device() must succeed"
+  },
+  "profiles": {
+    "source_default_latency": {
+      "required_config": {
+        "mode": "both",
+        "variants": ["standard", "ma_gpu", "ma_offload"],
+        "decode_offload": "bulk",
+        "check_correctness": true,
+        "batch_size": 8,
+        "logits_to_keep": 0,
+        "pad_token_id": null,
+        "seq_len": 2048,
+        "context_len": 2048,
+        "hidden_size": 2048,
+        "num_heads": 32,
+        "num_kv_heads": 32,
+        "num_layers": 24,
+        "hidden_ratio": 4,
+        "intermediate_size": 5632,
+        "no_fuse_swiglu": false,
+        "vocab_size": 32000,
+        "group_size": 1,
+        "prefetch_depth": 4,
+        "gpu_ma_lookup": "layerwise",
+        "qkv_bias": false,
+        "qk_norm": false,
+        "use_gate": false,
+        "window_size": null,
+        "rope_theta": 10000.0,
+        "norm_eps": null,
+        "cpu_threads": 4,
+        "fold_chunk": 1024,
+        "id_pool": 16,
+        "warmup": 5,
+        "repeats": 30,
+        "rounds": 5,
+        "timing": "latency",
+        "seed": 1234,
+        "device": "cuda:0",
+        "profile_dir": null,
+        "kernel_trace": false
+      },
+      "json_path_policy": "non-empty string",
+      "required_result_pairs": [
+        ["standard", "prefill"],
+        ["ma_gpu", "prefill"],
+        ["ma_offload", "prefill"],
+        ["standard", "decode"],
+        ["ma_gpu", "decode"],
+        ["ma_offload", "decode"]
+      ]
+    }
+  },
+  "result_contract": {
+    "round_count_from_config": true,
+    "recompute_median_min_max": true,
+    "recompute_speedup_vs_standard": true,
+    "require_positive_finite_timings": true,
+    "require_parameter_placement_identity": true,
+    "require_offload_policy_identity": true
+  },
+  "bundle_contract": {
+    "hardware_manifest": "hardware.json",
+    "benchmark_results": "bmk_results.json",
+    "sha256_bind_results_from_manifest": true,
+    "synthetic_fixture_allowed_only_in_validator_tests": true
+  }
+}
