@@ -395,6 +395,16 @@ is a normal and valid outcome.
 
 This separation is intentional.
 
+## Finite RAM residency transfer
+
+The Finite RAM Lab B461-B500 line provides a reusable experiment contract for separating logical information obligation from simultaneous physical residency.
+
+For this repository, the transfer is aimed primarily at BENCH-002 and future residency/offload experiments.
+
+See [docs/FINITE-RAM-RESIDENCY-TRANSFER-2026-10-02.md](docs/FINITE-RAM-RESIDENCY-TRANSFER-2026-10-02.md).
+
+No hosted RAM threshold or q policy is imported.
+
 ## Initial research sequence
 
 The harness must earn trust before larger model experiments begin.
